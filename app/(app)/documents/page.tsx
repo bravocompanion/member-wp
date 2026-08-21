@@ -1,0 +1,6 @@
+import { Topbar } from '@/components/topbar'
+import { createClient } from '@/lib/supabase/server'
+import { isDemoMode } from '@/lib/data'
+const demo=[{id:'d1',name:'PT. DEMO BADAN 023',doc:'KTP',status:'missing'},{id:'d2',name:'PT. DEMO BADAN 023',doc:'KK',status:'received'},{id:'d3',name:'PT. DEMO BADAN 025',doc:'Foto Direktur',status:'missing'},{id:'d4',name:'PT. DEMO BADAN 034',doc:'Akta Perusahaan',status:'missing'}]
+export const metadata={title:'Dokumen'}
+export default async function DocumentsPage(){let rows:any[]=demo;if(!isDemoMode()){const s=await createClient();const {data}=await s.from('document_requirements').select('id,document_name,status,taxpayers(name)').order('status').limit(500);rows=(data||[]).map((x:any)=>({id:x.id,name:x.taxpayers?.name||'—',doc:x.document_name,status:x.status}))}return <><Topbar title="Dokumen" subtitle="Checklist dokumen yang diperlukan per WP"/><div className="content"><div className="tableCard"><table className="dataTable"><thead><tr><th>Wajib Pajak</th><th>Dokumen</th><th>Status</th></tr></thead><tbody>{rows.map(x=><tr key={x.id}><td><strong>{x.name}</strong></td><td>{x.doc}</td><td><span className={x.status==='received'||x.status==='verified'?'badge ok':'badge warn'}>{x.status}</span></td></tr>)}</tbody></table></div></div></>}

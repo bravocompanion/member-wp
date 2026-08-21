@@ -1,0 +1,31 @@
+MEMBER WP v0.2 — COMPLIANCE CONTROL CENTER
+===========================================
+
+PREVIEW
+1. Buka preview/index.html langsung di browser.
+2. Preview memuat 233 WP dengan NPWP dimasking.
+3. Perubahan profil kewajiban, status, deadline, dan catatan disimpan ke localStorage browser.
+4. Klik Reset Demo untuk kembali ke kondisi awal.
+5. Data kewajiban awal di preview adalah SIMULASI WORKFLOW, bukan penetapan kewajiban pajak.
+
+PRODUCTION
+1. Siapkan environment dari .env.example.
+2. Jalankan migration 001_member_wp.sql terlebih dahulu.
+3. Jalankan migration 002_compliance_control.sql.
+4. Import workbook dengan scripts/import_member_wp.py sesuai README.
+5. Login sebagai admin/staff.
+6. Buka setiap WP dan konfirmasi Profil Kewajiban.
+7. Menyimpan profil membuat task periode berjalan dengan deadline kosong.
+8. Admin menetapkan deadline dan memperbarui status task.
+
+FITUR BARU v0.2
+- Profil Kewajiban per WP
+- Kontrol Bulanan / Tahunan
+- Editable status + deadline
+- Notes Timeline + Pin
+- Attention Center
+- Audit log untuk perubahan profil, task, dan notes
+- Tidak ada auto-assumption kewajiban berdasarkan BADAN / OP
+
+SECURITY
+Credential tetap terpisah di Vault. Preview tidak membawa EFIN/password/key/passphrase asli.
