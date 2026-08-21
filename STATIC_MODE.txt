@@ -1,0 +1,1 @@
+Member WP v0.2.2 production mode: Cloudflare Pages static, no Supabase runtime. Build: npm run build. Output: dist.
