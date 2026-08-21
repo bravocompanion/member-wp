@@ -1,0 +1,5 @@
+import { Topbar } from '@/components/topbar'
+import { getVaultMetadata, isDemoMode } from '@/lib/data'
+import { RevealCredential } from '@/components/reveal-credential'
+export const metadata={title:'Credential Vault'}
+export default async function VaultPage(){const rows:any[]=await getVaultMetadata();const demo=isDemoMode();return <><Topbar title="Credential Vault" subtitle="Akses server-only untuk EFIN, key, passphrase dan password"/><div className="content"><div className="notice" style={{marginBottom:14}}>Credential tidak disimpan sebagai kolom plaintext. Metadata berada di tabel aplikasi; nilai rahasia berada di Supabase Vault. Setiap reveal production dicatat.</div><div className="tableCard"><table className="dataTable"><thead><tr><th>Wajib Pajak</th><th>Jenis</th><th>Label</th><th>Updated</th><th></th></tr></thead><tbody>{rows.map(x=><tr key={x.id}><td><strong>{x.taxpayer_name}</strong></td><td className="mono">{x.kind}</td><td>{x.label}</td><td>{String(x.updated_at||'—').slice(0,19)}</td><td>{demo?<span className="badge">Demo: hidden</span>:<RevealCredential id={x.id}/>}</td></tr>)}</tbody></table></div></div></>}
