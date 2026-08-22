@@ -20,6 +20,8 @@ jobs:
           node --check static/v04.js
           node --check static/v05.js
           node --check static/v051.js
+          node --check static/v06.js
+          node --check static/v06-safe.js
       - name: Build static Pages bundle
         run: npm run build
       - name: Verify output and integration order
@@ -33,15 +35,20 @@ jobs:
           test -f dist/v05.css
           test -f dist/v051.js
           test -f dist/v051.css
+          test -f dist/v06.js
+          test -f dist/v06-safe.js
+          test -f dist/v06.css
           test -f dist/_headers
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
-          const order=['app.js','v04.js','v05.js','v051.js'].map(x=>html.indexOf(x))
+          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js'].map(x=>html.indexOf(x))
           if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Static script integration order is invalid')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.5.1') throw new Error(`Unexpected version ${pkg.version}`)
-          if(!html.includes('v0.5.1')) throw new Error('v0.5.1 shell marker missing')
-          const audit=fs.readFileSync('dist/v051.js','utf8')
-          for(const marker of ['Data Health Audit','Restore atomik','v051AuditData']) if(!audit.includes(marker)) throw new Error(`Missing audit marker: ${marker}`)
+          if(pkg.version!=='0.6.0') throw new Error(`Unexpected version ${pkg.version}`)
+          if(!html.includes('v0.6')) throw new Error('v0.6 shell marker missing')
+          const code=fs.readFileSync('dist/v06.js','utf8')
+          for(const marker of ['member-wp-private-import','PBKDF2','AES-GCM','v06PurgeDemo','v06ImportPrivatePackage']) if(!code.includes(marker)) throw new Error(`Missing v0.6 marker: ${marker}`)
+          const safe=fs.readFileSync('dist/v06-safe.js','utf8')
+          if(!safe.includes('this.previousElementSibling.textContent')) throw new Error('Safe copy handler missing')
           NODE
