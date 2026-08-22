@@ -1,46 +1,47 @@
-# Member WP v0.5 — Today & Deadline Control
+# Member WP v0.5.1 — Audit & Minimal UI
 
-Member WP berjalan sebagai **Cloudflare Pages tanpa Supabase**. Production build tidak membutuhkan Next.js runtime, Worker, API server, database cloud, atau environment variable.
+Member WP adalah **Cloudflare Pages static tanpa Supabase**. Data operasional disimpan di IndexedDB browser dan tidak membutuhkan Next.js runtime, Worker, API server, database cloud, atau environment variable.
 
-## Update v0.5
+## Audit v0.5.1
 
-- **Today Dashboard** sebagai halaman kerja utama admin.
-- Focus Queue mengurutkan task berdasarkan urgensi: overdue → hari ini → prioritas tinggi → 7 hari → kendala/waiting.
-- Ringkasan deadline: overdue, hari ini, ≤7 hari, 8–14 hari, 15–30 hari, dan tanpa deadline.
-- **Deadline Center** dengan filter waktu, prioritas, status, pencarian task/WP/PIC, dan quick actions.
-- Quick action untuk mulai task dan tandai selesai tanpa membuka detail WP.
-- **Reminder Snooze** 1 hari tanpa mengubah deadline task.
-- Daftar khusus task tanpa deadline agar dapat dilengkapi admin.
-- Browser Notification opsional ketika Member WP sedang terbuka.
-- Reminder browser tidak berjalan sebagai background scheduler ketika tab/aplikasi ditutup.
-- Activity Timeline mencatat task start/complete serta snooze/unsnooze reminder.
+Update ini berfokus pada stabilitas, keamanan data lokal, dan penyederhanaan UI sebelum masuk ke fitur v0.6.
 
-## Compliance v0.4 yang tetap tersedia
+- Dashboard diringkas agar tidak menduplikasi informasi Today/Deadline.
+- Navigasi utama dipangkas menjadi **Today, WP, Task, Deadline, Catatan, Lainnya**.
+- Template, Attention, Activity, dan Data/Backup dipindahkan ke menu **Lainnya**.
+- Daftar WP dan Deadline diubah menjadi list responsif yang lebih ringkas daripada tabel lebar.
+- Visual dirapikan: shadow dikurangi, radius lebih kecil, warning banner dipadatkan, spacing lebih konsisten.
+- **Data Health Audit** memeriksa orphan records, duplicate NPWP, duplicate compliance task, kode kewajiban tidak dikenal, judul task kosong, serta deadline tidak valid.
+- Logika overdue/due-today memakai tanggal lokal browser, bukan UTC, untuk mencegah salah klasifikasi sekitar tengah malam WITA.
+- Backup sekarang menulis versi aplikasi **0.5.1** dan timestamp ISO yang dapat dihitung umur backup-nya.
+- Restore diperketat dengan validasi struktur dan relasi sebelum database disentuh.
+- Restore menggunakan satu transaksi IndexedDB lintas store sehingga bersifat **atomik**: gagal berarti database lama tidak diganti setengah jalan.
+- Restore tetap menolak field credential sensitif.
+- GitHub Actions QA sekarang mengecek `app.js`, `v04.js`, `v05.js`, `v051.js`, urutan integrasi script, output build, dan marker audit.
 
-- Template Kewajiban bawaan dan custom.
-- Template hanya starter checklist dan tetap wajib direview admin.
-- Compliance Engine untuk periode berjalan dan bulan berikutnya.
-- Task periodized dan dedup per WP + kewajiban + periode.
-- Histori task periode lama tetap dipertahankan.
-- Deadline tidak diasumsikan otomatis oleh aplikasi.
+## Workflow utama
 
-## Data & workflow v0.3 yang tetap tersedia
+```text
+Today
+  → Prioritas Hari Ini
+  → Deadline / Follow-up
+  → Buka WP / Mulai / Selesai
+```
 
-- IndexedDB sebagai penyimpanan utama.
-- Tambah/edit/nonaktifkan/hapus member.
+Menu utama sengaja dibuat pendek. Kontrol sekunder tersedia di **Lainnya**.
+
+## Fitur yang tetap tersedia
+
+- IndexedDB local database.
+- Tambah/edit/nonaktifkan/hapus WP.
 - PIC, telepon, email operasional, status member.
-- Task manual, deadline, prioritas, dan status.
-- Attention Center.
+- Profil dan Template Kewajiban.
+- Compliance Engine per periode dan dedup task.
+- Task manual, deadline, prioritas, status, snooze reminder.
 - Notes tambah/edit/hapus/Pin.
-- Activity Timeline lokal.
+- Attention Center dan Activity Timeline.
 - Backup/restore JSON.
-- Restore menolak field credential sensitif.
-
-## Prinsip Reminder
-
-Snooze hanya menunda **pengingat internal**. Snooze tidak mengubah `dueDate` task.
-
-Browser Notification adalah convenience reminder ketika Member WP sedang terbuka di browser. Karena versi ini tidak menggunakan server, service backend, atau scheduler, notifikasi tidak dijamin muncul ketika aplikasi ditutup.
+- Browser reminder ketika Member WP sedang terbuka.
 
 ## Cloudflare Pages
 
@@ -53,17 +54,11 @@ Root directory: /
 
 Tidak diperlukan environment variable Supabase.
 
-## Penyimpanan
+## Penyimpanan & keamanan
 
-IndexedDB berada pada browser/perangkat yang sedang digunakan. Tidak ada sinkronisasi otomatis antar perangkat.
+IndexedDB berada di browser/perangkat yang digunakan dan tidak sinkron otomatis ke perangkat lain. Lakukan backup JSON secara berkala.
 
-Gunakan **Data & Backup → Backup JSON** secara berkala. Backup mencakup member, profil kewajiban, task, reminder state, notes, activity log, template custom, dan metadata aplikasi.
-
-## Keamanan
-
-Static app bukan credential vault. Jangan menyimpan password email, EFIN, password DJP/Coretax, Coretax key/passphrase, Key DJP, atau secret lain.
-
-Source production hanya berisi data demo sintetis. Untuk membatasi siapa yang dapat membuka Pages/custom domain, gunakan **Cloudflare Access**.
+Static app **bukan credential vault**. Jangan simpan password email, EFIN, password DJP/Coretax, Coretax key/passphrase, Key DJP, atau secret lain. Gunakan Cloudflare Access bila halaman hanya boleh dibuka admin/staff.
 
 ## Build
 
@@ -71,4 +66,4 @@ Source production hanya berisi data demo sintetis. Untuk membatasi siapa yang da
 npm run build
 ```
 
-Build menyalin seluruh folder `static/` ke `dist/` dan menambahkan security headers dasar.
+Build menyalin folder `static/` ke `dist/` dan menambahkan security headers dasar.
