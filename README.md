@@ -1,23 +1,22 @@
-# Member WP v0.2.2 — Static Admin Control Center
+# Member WP v0.3 — Static Admin Control Center
 
-Member WP sekarang ditargetkan ke **Cloudflare Pages tanpa Supabase**.
+Member WP berjalan sebagai **Cloudflare Pages tanpa Supabase**. Production build tidak membutuhkan Next.js runtime, Worker, API server, database cloud, atau environment variable.
 
-Production build tidak memakai Next.js runtime, Workers, SSR, API server, database, atau authentication backend. Aplikasi production berada di `static/index.html`; `npm run build` menyalinnya ke folder `dist/` untuk Cloudflare Pages.
+## Update v0.3
 
-## Fitur static
-
-- Dashboard Admin
-- 233 WP demo sintetis
-- Master Wajib Pajak + pencarian/filter
-- Profil kewajiban per WP
-- Task bulanan/tahunan
-- Status pekerjaan
-- Attention Center
-- Notes timeline + Pin
-- Import/restore backup JSON lokal
-- Export backup JSON
-- Reset ke data demo
-- Penyimpanan dengan browser `localStorage`
+- Penyimpanan utama pindah dari `localStorage` ke **IndexedDB**.
+- Migrasi otomatis data v0.2 dari key `memberwp-static-v022` jika tersedia.
+- **Tambah Member** baru.
+- Edit data member: nama, jenis WP, NPWP, PIC, telepon, email operasional, status.
+- Nonaktifkan/aktifkan dan hapus member.
+- Profil kewajiban per WP tetap tersedia.
+- **Task manual** per WP.
+- Deadline, prioritas, dan status task dapat diedit langsung.
+- Attention Center membaca overdue, blocked, waiting client/documents, dan prioritas tinggi.
+- Notes mendukung tambah, edit, hapus, Pin/Unpin.
+- **Activity Timeline** lokal sebagai audit trail perubahan admin.
+- Backup/restore JSON untuk seluruh database lokal.
+- Restore menolak field credential sensitif seperti password, EFIN, passphrase, Coretax key, dan Key DJP.
 
 ## Cloudflare Pages
 
@@ -32,30 +31,32 @@ Root directory: /
 
 Tidak diperlukan environment variable Supabase.
 
-## Penyimpanan data
+## Penyimpanan
 
-Static Pages tidak memiliki database. Semua perubahan tersimpan di browser/perangkat yang sedang digunakan.
+IndexedDB berada pada browser/perangkat yang sedang digunakan. Tidak ada sinkronisasi otomatis antar perangkat.
 
-Gunakan menu **Data & Backup** untuk membuat backup JSON secara berkala. Backup dapat di-import kembali pada perangkat/browser yang sama atau perangkat lain.
+Gunakan **Data & Backup → Backup JSON** secara berkala. Backup mencakup member, profil kewajiban, task, notes, activity log, dan metadata aplikasi.
 
 ## Keamanan
 
-Repository dan Pages dapat diakses publik bila tidak dilindungi. Karena itu source production tidak berisi data WP asli atau credential.
-
-Jangan simpan di static app:
+Static app bukan credential vault. Jangan menyimpan:
 
 - password email;
 - EFIN;
-- Coretax key/passphrase;
 - password DJP/Coretax;
-- credential rahasia lain.
+- Coretax key/passphrase;
+- Key DJP atau secret lain.
 
-Jika aplikasi hanya boleh dibuka admin/staff, lindungi Pages/custom domain menggunakan **Cloudflare Access**.
+Source production hanya berisi data demo sintetis. Untuk membatasi siapa yang dapat membuka Pages/custom domain, gunakan **Cloudflare Access**.
 
-## Data WP asli
+## Build
 
-Data operasional dapat dimasukkan melalui mekanisme import lokal tanpa mengunggah data tersebut ke GitHub. Untuk data yang perlu sinkron antar perangkat/multi-user, dibutuhkan backend/database terpisah; versi static ini sengaja tidak menyediakan sinkronisasi server.
+```bash
+npm run build
+```
+
+Build menyalin seluruh folder `static/` ke `dist/` dan menambahkan security headers dasar.
 
 ## Legacy source
 
-Folder Next.js/Supabase lama masih dipertahankan di repository sebagai referensi pengembangan, tetapi tidak ikut dalam production build static v0.2.2.
+Folder Next.js/Supabase lama masih ada sebagai referensi pengembangan, tetapi tidak ikut runtime production v0.3.
