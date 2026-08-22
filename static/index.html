@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#163a55">
-<title>Member WP v0.3 — Admin Control Center</title>
+<title>Member WP v0.4 — Compliance Control Center</title>
 <link rel="stylesheet" href="./app.css">
+<link rel="stylesheet" href="./v04.css">
 </head>
 <body>
-<div id="loading" class="loading"><div><b>Member WP v0.3</b><br><small>Membuka database lokal IndexedDB...</small></div></div>
+<div id="loading" class="loading"><div><b>Member WP v0.4</b><br><small>Membuka database lokal IndexedDB...</small></div></div>
 <div id="appRoot" hidden>
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Admin Control Center v0.3</small></div></div>
+  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Admin Control Center v0.4</small></div></div>
   <nav class="nav" id="nav">
     <button data-view="dashboard" class="active"><span>Dashboard</span></button>
     <button data-view="taxpayers"><span>Wajib Pajak</span></button>
@@ -30,7 +31,7 @@
     <div class="topactions"><button class="btn" onclick="exportBackup()">Backup JSON</button><button class="btn primary" onclick="openMemberForm()">+ Tambah Member</button></div>
   </header>
   <div class="content">
-    <div class="notice">Mode lokal tanpa Supabase. Jangan simpan password, EFIN, passphrase, Coretax Key, Key DJP, atau credential sensitif di aplikasi static. Gunakan Cloudflare Access untuk membatasi akses halaman.</div>
+    <div class="notice">Mode lokal tanpa Supabase. Template kewajiban hanya starter operasional dan tetap harus diverifikasi admin. Jangan simpan password, EFIN, passphrase, Coretax Key, Key DJP, atau credential sensitif di aplikasi static.</div>
     <section id="dashboard" class="view active"></section>
     <section id="taxpayers" class="view"></section>
     <section id="compliance" class="view"></section>
@@ -45,5 +46,6 @@
 <div id="drawer" class="drawer"><button class="close" onclick="closeDrawer()">×</button><div id="drawerBody"></div></div>
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div id="modalBody" class="modalbox"></div></div>
 <script src="./app.js" defer></script>
+<script src="./v04.js" defer></script>
 </body>
 </html>
