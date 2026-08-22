@@ -4,35 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#163a55">
-<title>Member WP v0.5 — Today & Deadline Control</title>
+<title>Member WP v0.5.1 — Admin Control Center</title>
 <link rel="stylesheet" href="./app.css">
 <link rel="stylesheet" href="./v04.css">
 <link rel="stylesheet" href="./v05.css">
+<link rel="stylesheet" href="./v051.css">
 </head>
 <body>
-<div id="loading" class="loading"><div><b>Member WP v0.5</b><br><small>Membuka database lokal IndexedDB...</small></div></div>
+<div id="loading" class="loading"><div><b>Member WP v0.5.1</b><br><small>Membuka database lokal...</small></div></div>
 <div id="appRoot" hidden>
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Admin Control Center v0.5</small></div></div>
+  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Control Center v0.5.1</small></div></div>
   <nav class="nav" id="nav">
     <button data-view="dashboard" class="active"><span>Today</span></button>
-    <button data-view="taxpayers"><span>Wajib Pajak</span></button>
-    <button data-view="compliance"><span>Kewajiban & Task</span></button>
-    <button data-view="attention"><span>Attention</span></button>
+    <button data-view="taxpayers"><span>WP</span></button>
+    <button data-view="compliance"><span>Task</span></button>
     <button data-view="notes"><span>Catatan</span></button>
-    <button data-view="activity"><span>Aktivitas</span></button>
-    <button data-view="data"><span>Data & Backup</span></button>
   </nav>
-  <div class="sidefoot">Static Cloudflare Pages tanpa Supabase. Data tersimpan di IndexedDB browser ini. Reminder browser hanya berjalan saat Member WP sedang terbuka.</div>
+  <div class="sidefoot"><b>Local</b> · IndexedDB</div>
 </aside>
 <main class="main">
   <header class="top">
-    <div><h1 id="title">Today Dashboard</h1><p id="subtitle">Apa yang perlu dikerjakan hari ini dan apa yang segera jatuh tempo</p></div>
-    <div class="topactions"><button class="btn" onclick="go('deadlines')">Deadline Center</button><button class="btn" onclick="exportBackup()">Backup JSON</button><button class="btn primary" onclick="openMemberForm()">+ Tambah Member</button></div>
+    <div><h1 id="title">Today Dashboard</h1><p id="subtitle">Prioritas kerja, deadline, dan follow-up</p></div>
+    <div class="topactions"><button class="btn" onclick="exportBackup()">Backup</button><button class="btn primary" onclick="openMemberForm()">+ Member</button></div>
   </header>
   <div class="content">
-    <div class="notice">Mode lokal tanpa Supabase. Template kewajiban hanya starter operasional dan tetap harus diverifikasi admin. Snooze reminder tidak mengubah deadline. Jangan simpan password, EFIN, passphrase, Coretax Key, Key DJP, atau credential sensitif di aplikasi static.</div>
+    <div class="notice v051-notice"><b>Local-only</b> · Data tersimpan di browser ini. Backup rutin dan jangan simpan credential sensitif.</div>
     <section id="dashboard" class="view active"></section>
     <section id="taxpayers" class="view"></section>
     <section id="compliance" class="view"></section>
@@ -49,5 +47,6 @@
 <script src="./app.js" defer></script>
 <script src="./v04.js" defer></script>
 <script src="./v05.js" defer></script>
+<script src="./v051.js" defer></script>
 </body>
 </html>
