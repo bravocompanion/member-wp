@@ -1,0 +1,27 @@
+name: Static Pages QA
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: node --check static/app.js
+      - name: Build static Pages bundle
+        run: npm run build
+      - name: Verify output
+        run: |
+          test -f dist/index.html
+          test -f dist/app.js
+          test -f dist/app.css
+          test -f dist/_headers
+          grep -q "IndexedDB" dist/index.html
