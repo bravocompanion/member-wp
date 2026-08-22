@@ -4,18 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#163a55">
-<title>Member WP v0.5.1 — Admin Control Center</title>
+<title>Member WP v0.6 — Private Excel Control Center</title>
 <link rel="stylesheet" href="./app.css">
 <link rel="stylesheet" href="./v04.css">
 <link rel="stylesheet" href="./v05.css">
 <link rel="stylesheet" href="./v051.css">
+<link rel="stylesheet" href="./v06.css">
 </head>
 <body>
-<div id="loading" class="loading"><div><b>Member WP v0.5.1</b><br><small>Membuka database lokal...</small></div></div>
+<div id="loading" class="loading"><div><b>Member WP v0.6</b><br><small>Membuka database lokal...</small></div></div>
 <div id="appRoot" hidden>
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Control Center v0.5.1</small></div></div>
+  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Control Center v0.6</small></div></div>
   <nav class="nav" id="nav">
     <button data-view="dashboard" class="active"><span>Today</span></button>
     <button data-view="taxpayers"><span>WP</span></button>
@@ -30,7 +31,7 @@
     <div class="topactions"><button class="btn" onclick="exportBackup()">Backup</button><button class="btn primary" onclick="openMemberForm()">+ Member</button></div>
   </header>
   <div class="content">
-    <div class="notice v051-notice"><b>Local-only</b> · Data tersimpan di browser ini. Backup rutin dan jangan simpan credential sensitif.</div>
+    <div class="notice v051-notice"><b>Local-only</b> · Data Excel tersimpan di browser. Credential sensitif dienkripsi dengan master passphrase lokal.</div>
     <section id="dashboard" class="view active"></section>
     <section id="taxpayers" class="view"></section>
     <section id="compliance" class="view"></section>
@@ -48,5 +49,6 @@
 <script src="./v04.js" defer></script>
 <script src="./v05.js" defer></script>
 <script src="./v051.js" defer></script>
+<script src="./v06.js" defer></script>
 </body>
 </html>
