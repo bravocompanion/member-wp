@@ -18,6 +18,7 @@ jobs:
         run: |
           node --check static/app.js
           node --check static/v04.js
+          node --check static/v05.js
       - name: Build static Pages bundle
         run: npm run build
       - name: Verify output
@@ -27,7 +28,11 @@ jobs:
           test -f dist/app.css
           test -f dist/v04.js
           test -f dist/v04.css
+          test -f dist/v05.js
+          test -f dist/v05.css
           test -f dist/_headers
           grep -q "IndexedDB" dist/index.html
-          grep -q "v0.4" dist/index.html
+          grep -q "v0.5" dist/index.html
           grep -q "Compliance Engine" dist/v04.js
+          grep -q "Deadline Center" dist/v05.js
+          grep -q "Today Dashboard" dist/v05.js
