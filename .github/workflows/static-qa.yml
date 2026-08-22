@@ -19,9 +19,10 @@ jobs:
           node --check static/app.js
           node --check static/v04.js
           node --check static/v05.js
+          node --check static/v051.js
       - name: Build static Pages bundle
         run: npm run build
-      - name: Verify output
+      - name: Verify output and integration order
         run: |
           test -f dist/index.html
           test -f dist/app.js
@@ -30,9 +31,17 @@ jobs:
           test -f dist/v04.css
           test -f dist/v05.js
           test -f dist/v05.css
+          test -f dist/v051.js
+          test -f dist/v051.css
           test -f dist/_headers
-          grep -q "IndexedDB" dist/index.html
-          grep -q "v0.5" dist/index.html
-          grep -q "Compliance Engine" dist/v04.js
-          grep -q "Deadline Center" dist/v05.js
-          grep -q "Today Dashboard" dist/v05.js
+          node - <<'NODE'
+          const fs=require('fs')
+          const html=fs.readFileSync('dist/index.html','utf8')
+          const order=['app.js','v04.js','v05.js','v051.js'].map(x=>html.indexOf(x))
+          if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Static script integration order is invalid')
+          const pkg=require('./package.json')
+          if(pkg.version!=='0.5.1') throw new Error(`Unexpected version ${pkg.version}`)
+          if(!html.includes('v0.5.1')) throw new Error('v0.5.1 shell marker missing')
+          const audit=fs.readFileSync('dist/v051.js','utf8')
+          for(const marker of ['Data Health Audit','Restore atomik','v051AuditData']) if(!audit.includes(marker)) throw new Error(`Missing audit marker: ${marker}`)
+          NODE
