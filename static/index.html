@@ -4,27 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#163a55">
-<title>Member WP v0.7 — Supabase Cloud Control Center</title>
+<title>Member WP v0.8 — Personal Direct Database</title>
 <link rel="stylesheet" href="./app.css">
 <link rel="stylesheet" href="./v04.css">
 <link rel="stylesheet" href="./v05.css">
 <link rel="stylesheet" href="./v051.css">
 <link rel="stylesheet" href="./v06.css">
-<link rel="stylesheet" href="./v07.css?v=070">
+<link rel="stylesheet" href="./v08.css?v=080">
 </head>
 <body>
-<div id="loading" class="loading"><div><b>Member WP v0.7</b><br><small>Membuka database lokal dan Supabase...</small></div></div>
+<div id="v08Gate" class="v08-gate show"><div class="v08-gate-card"><div class="v08-gate-brand"><div class="mark">M</div><div><b>Member WP</b><small>Personal Database</small></div></div><h1 id="v08GateTitle">Membuka database...</h1><p id="v08GateText">Menghubungkan Supabase pribadi.</p><div id="v08GateActions"></div></div></div>
+<div id="loading" class="loading"><div><b>Member WP v0.8</b><br><small>Menghubungkan database pribadi...</small></div></div>
 <div id="appRoot" hidden>
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Control Center v0.7</small></div></div>
+  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Control Center v0.8</small></div></div>
   <nav class="nav" id="nav">
     <button data-view="dashboard" class="active"><span>Today</span></button>
     <button data-view="taxpayers"><span>WP</span></button>
     <button data-view="compliance"><span>Task</span></button>
     <button data-view="notes"><span>Catatan</span></button>
   </nav>
-  <div class="sidefoot"><b>Cloud + Local</b> · Supabase</div>
+  <div class="sidefoot"><b>Personal</b> · Supabase</div>
 </aside>
 <main class="main">
   <header class="top">
@@ -32,7 +33,7 @@
     <div class="topactions"><button class="btn" onclick="exportBackup()">Backup</button><button class="btn primary" onclick="openMemberForm()">+ Member</button></div>
   </header>
   <div class="content">
-    <div class="notice v051-notice"><b>Supabase</b> · Memeriksa autentikasi dan sinkronisasi...</div>
+    <div class="notice v051-notice"><b>Database</b> · Menghubungkan Supabase pribadi...</div>
     <section id="dashboard" class="view active"></section>
     <section id="taxpayers" class="view"></section>
     <section id="compliance" class="view"></section>
@@ -53,7 +54,6 @@
 <script src="./v06.js" defer></script>
 <script src="./v06-safe.js" defer></script>
 <script src="./v061.js?v=061" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" defer></script>
-<script src="./v07.js?v=070" defer></script>
+<script src="./v08.js?v=080" defer></script>
 </body>
 </html>

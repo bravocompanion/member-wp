@@ -1,18 +1,57 @@
-# Cloudflare Pages Deployment — No Supabase
+# Cloudflare Pages Deployment — Member WP v0.8
 
-Member WP production is a static Pages application. It does not require Supabase, Workers, SSR, API routes, or server environment variables.
+Member WP production uses **Cloudflare Pages + Pages Functions**. Supabase project `member wp` is the private database backend.
 
-Cloudflare Pages settings:
+Cloudflare Pages settings remain:
 
 - Production branch: `main`
 - Build command: `npm run build`
 - Build output directory: `dist`
 - Root directory: `/`
 
-The build script copies the local-only application from `static/index.html` into `dist/index.html` and adds basic security headers.
+No database secret, Supabase service-role key, or device token is committed to GitHub.
 
-## Data model
+## Pages Functions
 
-Operational state is stored in the browser with `localStorage`. Use **Data & Backup → Download Backup JSON** regularly. Backups can be restored from the same screen.
+Cloudflare automatically deploys the root `functions/` directory together with the static output. The endpoint used by the browser is:
 
-Do not embed or import passwords, EFIN, Coretax keys/passphrases, or other secrets into a public static deployment. If the site must be private, protect the Pages URL/custom domain with Cloudflare Access.
+```text
+/api/member-wp
+```
+
+The Pages Function:
+
+1. validates the private device cookie;
+2. forwards only validated requests to the Supabase Edge Function;
+3. never exposes the Supabase service-role key to the browser.
+
+No Cloudflare environment variable is required for v0.8 device authentication. The repository contains only the SHA-256 hash of the private device token.
+
+## First device activation
+
+The first browser is activated once using a private URL fragment:
+
+```text
+https://<member-wp-domain>/#activate=<private-device-token>
+```
+
+URL fragments are not sent with the initial HTTP request. JavaScript sends the token once to the same-origin Pages Function, which validates it and creates an `HttpOnly; Secure; SameSite=Strict` cookie.
+
+After activation, use the normal URL without the fragment.
+
+Keep the activation shortcut private. It grants access to the personal Member WP database on a new browser.
+
+## Database
+
+Supabase tables:
+
+```text
+member_wp_single_records
+member_wp_single_credentials
+```
+
+Both tables have RLS enabled and no grants for `anon` or `authenticated`. Browser access is not permitted directly.
+
+## Local cache
+
+IndexedDB remains a cache/offline layer. Supabase is the production source of truth. Opening the app refreshes the local cache from Supabase when the private API is available.

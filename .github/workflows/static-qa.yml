@@ -23,35 +23,38 @@ jobs:
           node --check static/v06.js
           node --check static/v06-safe.js
           node --check static/v061.js
-          node --check static/v07.js
+          node --check static/v08.js
+          node --check functions/api/member-wp.js
       - name: Build static Pages bundle
         run: npm run build
-      - name: Verify output and integration order
+      - name: Verify v0.8 output and security markers
         run: |
           test -f dist/index.html
           test -f dist/app.js
-          test -f dist/app.css
-          test -f dist/v04.js
-          test -f dist/v05.js
-          test -f dist/v051.js
-          test -f dist/v06.js
-          test -f dist/v06-safe.js
-          test -f dist/v061.js
-          test -f dist/v07.js
-          test -f dist/v07.css
+          test -f dist/v08.js
+          test -f dist/v08.css
           test -f dist/_headers
-          test -f supabase/migrations/003_member_wp_cloud_sync.sql
+          test -f functions/api/member-wp.js
+          test -f supabase/migrations/004_member_wp_single_user_database.sql
+          test -f supabase/functions/member-wp-personal-api/index.ts
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
-          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','@supabase/supabase-js@2.112.3','v07.js'].map(x=>html.indexOf(x))
+          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v08.js'].map(x=>html.indexOf(x))
           if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Static script integration order is invalid')
+          if(html.includes('@supabase/supabase-js')||html.includes('v07.js')) throw new Error('v0.7 browser auth runtime is still loaded')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.7.0') throw new Error(`Unexpected version ${pkg.version}`)
-          if(!html.includes('v0.7')) throw new Error('v0.7 shell marker missing')
-          const v07=fs.readFileSync('dist/v07.js','utf8')
-          for(const marker of ['signInWithPassword','signUp','member_wp_records','member_wp_sync_state','v07PushAll','v07PullAll','V07_SUPABASE_PUBLISHABLE_KEY']) if(!v07.includes(marker)) throw new Error(`Missing v0.7 marker: ${marker}`)
-          if(v07.includes('service_role')||v07.includes('sb_secret_')) throw new Error('Privileged Supabase key marker found in browser code')
-          const migration=fs.readFileSync('supabase/migrations/003_member_wp_cloud_sync.sql','utf8')
-          for(const marker of ['enable row level security','revoke all on public.member_wp_records from anon','to authenticated','auth.uid()']) if(!migration.toLowerCase().includes(marker.toLowerCase())) throw new Error(`Missing migration security marker: ${marker}`)
+          if(pkg.version!=='0.8.0') throw new Error(`Unexpected version ${pkg.version}`)
+          if(!html.includes('v0.8')) throw new Error('v0.8 shell marker missing')
+          const v08=fs.readFileSync('dist/v08.js','utf8')
+          for(const marker of ['#activate=','action=bootstrap','device token','v08Credential','v08Flush','Personal Direct']) if(!v08.toLowerCase().includes(marker.toLowerCase())) throw new Error(`Missing v0.8 marker: ${marker}`)
+          for(const forbidden of ['signInWithPassword','signUp({','service_role','sb_secret_','SUPABASE_SERVICE_ROLE_KEY']) if(v08.includes(forbidden)) throw new Error(`Forbidden browser marker: ${forbidden}`)
+          const bridge=fs.readFileSync('functions/api/member-wp.js','utf8')
+          for(const marker of ['HttpOnly','SameSite=Strict','device_not_activated','member-wp-personal-api','TOKEN_HASH']) if(!bridge.includes(marker)) throw new Error(`Missing API bridge marker: ${marker}`)
+          const edge=fs.readFileSync('supabase/functions/member-wp-personal-api/index.ts','utf8')
+          for(const marker of ['x-member-wp-server-key','SUPABASE_SERVICE_ROLE_KEY','member_wp_single_records','member_wp_single_credentials','KEY_HASH']) if(!edge.includes(marker)) throw new Error(`Missing Edge Function marker: ${marker}`)
+          const combined=bridge+v08+html+edge
+          if(/uUXViXpxd3swYtIg/.test(combined)) throw new Error('Plain device token leaked into repository source')
+          const migration=fs.readFileSync('supabase/migrations/004_member_wp_single_user_database.sql','utf8').toLowerCase()
+          for(const marker of ['enable row level security','revoke all on public.member_wp_single_records from anon, authenticated','revoke all on public.member_wp_single_credentials from anon, authenticated']) if(!migration.includes(marker)) throw new Error(`Missing migration security marker: ${marker}`)
           NODE
