@@ -23,44 +23,42 @@ jobs:
           node --check static/v06.js
           node --check static/v06-safe.js
           node --check static/v061.js
-          node --check static/v08.js
-          node --check static/v081.js
+          node --check static/v09.js
           node --check functions/api/member-wp.js
       - name: Build static Pages bundle
         run: npm run build
-      - name: Verify v0.8.1 output and security markers
+      - name: Verify v0.9 output and login security
         run: |
           test -f dist/index.html
           test -f dist/app.js
-          test -f dist/v08.js
-          test -f dist/v081.js
-          test -f dist/v08.css
+          test -f dist/v09.js
+          test -f dist/v09.css
           test -f dist/_headers
           test -f functions/api/member-wp.js
           test -f supabase/migrations/004_member_wp_single_user_database.sql
           test -f supabase/migrations/005_member_wp_remove_legacy_auth_bootstrap.sql
+          test -f supabase/migrations/006_member_wp_app_login.sql
           test -f supabase/functions/member-wp-personal-api/index.ts
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
-          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v08.js','v081.js'].map(x=>html.indexOf(x))
+          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v09.js'].map(x=>html.indexOf(x))
           if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Static script integration order is invalid')
-          if(html.includes('@supabase/supabase-js')||html.includes('v07.js')) throw new Error('Legacy browser auth runtime is still loaded')
-          if(/id="v08Gate" class="v08-gate show"/.test(html)) throw new Error('Security gate must not block normal first paint in v0.8.1')
+          if(html.includes('v08.js')||html.includes('v081.js')||html.includes('@supabase/supabase-js')||html.includes('v07.js')) throw new Error('Legacy browser auth/device runtime is still loaded')
+          if(!html.includes('id="v09Login" class="v09-login show"')) throw new Error('Login must block first paint')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.8.1') throw new Error(`Unexpected version ${pkg.version}`)
-          if(!html.includes('v0.8.1')) throw new Error('v0.8.1 shell marker missing')
-          const v08=fs.readFileSync('dist/v08.js','utf8')
-          const v081=fs.readFileSync('dist/v081.js','utf8')
-          for(const marker of ['#activate=','action=bootstrap','device token','v08Credential','Personal Direct']) if(!v08.toLowerCase().includes(marker.toLowerCase())) throw new Error(`Missing v0.8 marker: ${marker}`)
-          for(const marker of ['v081HasRealCache','background bootstrap','visibilitychange','window.addEventListener(\'online\'','v081ReapplyPending','notice.hidden']) if(!v081.includes(marker)) throw new Error(`Missing v0.8.1 marker: ${marker}`)
-          for(const forbidden of ['signInWithPassword','signUp({','service_role','sb_secret_','SUPABASE_SERVICE_ROLE_KEY']) if((v08+v081).includes(forbidden)) throw new Error(`Forbidden browser marker: ${forbidden}`)
+          if(pkg.version!=='0.9.0') throw new Error(`Unexpected version ${pkg.version}`)
+          if(!html.includes('v0.9')) throw new Error('v0.9 shell marker missing')
+          const v09=fs.readFileSync('dist/v09.js','utf8')
+          for(const marker of ['action=login','action=logout','action=bootstrap','v09Credential','v09WipeLocal','Session berakhir']) if(!v09.includes(marker)) throw new Error(`Missing v0.9 marker: ${marker}`)
+          for(const forbidden of ['service_role','sb_secret_','SUPABASE_SERVICE_ROLE_KEY','#activate=','member_wp_device']) if(v09.includes(forbidden)) throw new Error(`Forbidden browser marker: ${forbidden}`)
           const bridge=fs.readFileSync('functions/api/member-wp.js','utf8')
-          for(const marker of ['HttpOnly','SameSite=Strict','device_not_activated','member-wp-personal-api','TOKEN_HASH']) if(!bridge.includes(marker)) throw new Error(`Missing API bridge marker: ${marker}`)
+          for(const marker of ['member_wp_session','HttpOnly','SameSite=Strict','action===\'login\'','x-member-wp-session']) if(!bridge.includes(marker)) throw new Error(`Missing API bridge marker: ${marker}`)
+          if(bridge.includes('TOKEN_HASH')||bridge.includes('member_wp_device')) throw new Error('Legacy device auth remains in bridge')
           const edge=fs.readFileSync('supabase/functions/member-wp-personal-api/index.ts','utf8')
-          for(const marker of ['x-member-wp-server-key','SUPABASE_SERVICE_ROLE_KEY','member_wp_single_records','member_wp_single_credentials','KEY_HASH']) if(!edge.includes(marker)) throw new Error(`Missing Edge Function marker: ${marker}`)
-          const combined=bridge+v08+v081+html+edge
-          if(/uUXViXpxd3swYtIg/.test(combined)) throw new Error('Plain device token leaked into repository source')
-          const migration=fs.readFileSync('supabase/migrations/004_member_wp_single_user_database.sql','utf8').toLowerCase()
-          for(const marker of ['enable row level security','revoke all on public.member_wp_single_records from anon, authenticated','revoke all on public.member_wp_single_credentials from anon, authenticated']) if(!migration.includes(marker)) throw new Error(`Missing migration security marker: ${marker}`)
+          for(const marker of ['member_wp_app_auth','PBKDF2','x-member-wp-session','makeSession','SUPABASE_SERVICE_ROLE_KEY','member_wp_single_records']) if(!edge.includes(marker)) throw new Error(`Missing Edge Function marker: ${marker}`)
+          const migration=fs.readFileSync('supabase/migrations/006_member_wp_app_login.sql','utf8').toLowerCase()
+          for(const marker of ['member_wp_app_auth','enable row level security','revoke all on public.member_wp_app_auth from anon, authenticated','provisioned out-of-band']) if(!migration.includes(marker)) throw new Error(`Missing login migration marker: ${marker}`)
+          const combined=html+v09+bridge+edge+migration
+          if(combined.includes('bravo@911')) throw new Error('Plain password leaked into repository source')
           NODE

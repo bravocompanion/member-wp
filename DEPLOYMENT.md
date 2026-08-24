@@ -1,57 +1,55 @@
-# Cloudflare Pages Deployment — Member WP v0.8
+# Cloudflare Pages Deployment — Member WP v0.9
 
-Member WP production uses **Cloudflare Pages + Pages Functions**. Supabase project `member wp` is the private database backend.
+Member WP production uses **Cloudflare Pages + Pages Functions** with Supabase project `member wp` as the private database backend.
 
-Cloudflare Pages settings remain:
+Cloudflare Pages settings:
 
 - Production branch: `main`
 - Build command: `npm run build`
 - Build output directory: `dist`
 - Root directory: `/`
 
-No database secret, Supabase service-role key, or device token is committed to GitHub.
+No database password, Supabase service-role key, or Member WP login password is committed to GitHub.
 
-## Pages Functions
+## Pages Function
 
-Cloudflare automatically deploys the root `functions/` directory together with the static output. The endpoint used by the browser is:
+Browser requests use:
 
 ```text
 /api/member-wp
 ```
 
-The Pages Function:
+The Pages Function handles:
 
-1. validates the private device cookie;
-2. forwards only validated requests to the Supabase Edge Function;
-3. never exposes the Supabase service-role key to the browser.
+- login forwarding to the protected Supabase Edge Function;
+- setting the signed session as `HttpOnly; Secure; SameSite=Strict` cookie;
+- logout/session cookie removal;
+- forwarding authenticated bootstrap, CRUD sync, and credential requests.
 
-No Cloudflare environment variable is required for v0.8 device authentication. The repository contains only the SHA-256 hash of the private device token.
+The browser never receives the Supabase service-role key.
 
-## First device activation
+## Login verification
 
-The first browser is activated once using a private URL fragment:
+The Supabase Edge Function verifies the application password against the private table:
 
 ```text
-https://<member-wp-domain>/#activate=<private-device-token>
+member_wp_app_auth
 ```
 
-URL fragments are not sent with the initial HTTP request. JavaScript sends the token once to the same-origin Pages Function, which validates it and creates an `HttpOnly; Secure; SameSite=Strict` cookie.
+The table stores only PBKDF2 salt/hash/iteration metadata. Production login values are provisioned directly in Supabase and are not included in repository migrations.
 
-After activation, use the normal URL without the fragment.
+After successful verification, the Edge Function creates a 30-day HMAC-signed session. The Pages Function stores that token in the HttpOnly cookie.
 
-Keep the activation shortcut private. It grants access to the personal Member WP database on a new browser.
-
-## Database
-
-Supabase tables:
+## Database tables
 
 ```text
 member_wp_single_records
 member_wp_single_credentials
+member_wp_app_auth
 ```
 
-Both tables have RLS enabled and no grants for `anon` or `authenticated`. Browser access is not permitted directly.
+RLS remains enabled. Browser roles do not receive direct grants to these tables.
 
 ## Local cache
 
-IndexedDB remains a cache/offline layer. Supabase is the production source of truth. Opening the app refreshes the local cache from Supabase when the private API is available.
+IndexedDB is used only after login as a browser cache/offline layer. Logout clears the local cache.
