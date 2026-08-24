@@ -1,0 +1,22 @@
+name: One-time Member WP Database Import
+
+on:
+  push:
+    branches:
+      - temp/member-wp-encrypted-import
+    paths:
+      - .github/workflows/temp-member-wp-import.yml
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger encrypted Supabase import
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -fsS 'https://apnbksfkenonbsvqbuok.supabase.co/functions/v1/member-wp-import-once?token=MdvHnNEUEx7igU7XOxR4MDlx8X7Ip6Gc9HZQqQbOZhM')
+          echo "$RESPONSE"
+          echo "$RESPONSE" | grep -q '"ok":true'
+          echo "$RESPONSE" | grep -q '"taxpayers":233'
+          echo "$RESPONSE" | grep -q '"credentials":233'
