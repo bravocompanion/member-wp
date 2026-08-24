@@ -3,7 +3,7 @@
   "version": "0.7.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/build-static.mjs"
+    "build": "node scripts/temp-import.mjs && node scripts/build-static.mjs"
   },
   "engines": {
     "node": ">=20"
