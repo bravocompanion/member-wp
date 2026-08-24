@@ -1,84 +1,103 @@
-# Member WP v0.7 — Supabase Cloud Control Center
+# Member WP v0.8 — Personal Direct Database
 
-Member WP tetap berjalan sebagai **Cloudflare Pages static**, tetapi data sekarang dapat disinkronkan ke project Supabase **`member wp`**. IndexedDB tetap dipakai sebagai cache/offline lokal.
+Member WP berjalan sebagai **Cloudflare Pages + Pages Functions** dengan project Supabase **`member wp`** sebagai database pusat. Tidak ada halaman login email/password di aplikasi.
 
 ## Arsitektur
 
 ```text
+Browser pribadi
+      ↓
 Cloudflare Pages
       ↓
-Member WP browser
-      ├─ IndexedDB (cache/offline)
-      └─ Supabase Auth + Data API
-             ↓
-       member_wp_records
-       member_wp_sync_state
+Pages Function /api/member-wp
+      ↓
+Supabase Edge Function
+      ↓
+Private Supabase tables
+      ├─ member_wp_single_records
+      └─ member_wp_single_credentials
+
+Browser juga menyimpan IndexedDB sebagai cache/offline.
 ```
+
+## Database produksi
+
+Workbook Member WP sudah dimasukkan ke Supabase:
+
+- 233 WP
+  - 72 Badan
+  - 161 OP
+- 233 credential
+- 36 kendala
+- 40 kebutuhan dokumen
+- 73 riwayat checklist
+- 21 referensi
+- 4 grup NPWP duplikat
+
+Data Excel asli tidak disimpan di repository GitHub.
+
+## Tanpa login page
+
+v0.8 menghapus runtime Supabase Auth dari browser. Tidak ada:
+
+- form email/password;
+- tombol Sign Up;
+- session Supabase Auth di UI;
+- publishable key Supabase di browser.
+
+Perangkat pribadi diaktifkan **satu kali** menggunakan activation token melalui URL fragment `#activate=...`. Fragment tidak dikirim ke server pada request halaman.
+
+Setelah token tervalidasi, Cloudflare Pages Function membuat cookie:
+
+- `HttpOnly`;
+- `Secure`;
+- `SameSite=Strict`;
+- berlaku satu tahun pada endpoint Member WP.
+
+Sesudah aktivasi pertama, buka Member WP seperti biasa dan database langsung dimuat.
 
 ## Security
 
-- Frontend hanya memakai **Supabase publishable key**.
-- Tidak ada `service_role` atau secret key di browser/source publik.
-- `anon` tidak diberi akses ke tabel Member WP.
-- Akses tabel hanya untuk role `authenticated`.
-- RLS membatasi setiap record dengan `owner_id = auth.uid()`.
-- Setiap akun hanya dapat membaca dan mengubah data miliknya sendiri.
-- Credential Excel tetap dalam bentuk **AES-GCM ciphertext** saat disinkronkan ke Supabase.
-- Master passphrase vault tetap hanya berada di memori browser dan tidak dikirim/disimpan di Supabase.
+- Plain device token tidak berada di GitHub.
+- Source hanya menyimpan SHA-256 hash token.
+- Token tidak dapat dibaca JavaScript setelah menjadi HttpOnly cookie.
+- Browser tidak memiliki Supabase service key.
+- Browser tidak terhubung langsung ke tabel Supabase.
+- `anon` dan `authenticated` tidak memiliki grant pada tabel single-user.
+- RLS tetap aktif pada tabel database.
+- Pages Function hanya meneruskan request setelah cookie perangkat valid.
+- Supabase Edge Function juga memverifikasi token yang sama sebelum memakai service role secara server-side.
+- Credential hanya diminta ketika detail member dibuka dan tidak ikut dalam bootstrap daftar WP.
 
-Schema cloud disimpan di `supabase/migrations/003_member_wp_cloud_sync.sql`.
-
-## Login
-
-Saat aplikasi dibuka, Member WP meminta login Supabase menggunakan email + password.
-
-Pengguna dapat:
-
-- Masuk dengan akun yang sudah ada.
-- Membuat akun baru.
-- Jika email confirmation aktif, konfirmasi email lalu kembali ke aplikasi untuk login.
+Schema database disimpan di `supabase/migrations/004_member_wp_single_user_database.sql`.
 
 ## Sinkronisasi
 
-Setelah login, tombol **Cloud** tersedia di header.
+Saat aplikasi dibuka:
 
-### Upload lokal → Supabase
+1. Pages Function memverifikasi perangkat.
+2. Browser mengambil snapshot Supabase.
+3. Snapshot mengganti cache IndexedDB lokal.
+4. UI langsung menampilkan database produksi.
 
-Menggunakan IndexedDB browser saat ini sebagai sumber dan menyelaraskan record cloud akun tersebut.
+Perubahan normal pada:
 
-Gunakan ini setelah import Excel pertama kali pada perangkat utama.
-
-### Download Supabase → browser
-
-Mengganti IndexedDB browser saat ini dengan snapshot cloud akun tersebut. Cocok untuk membuka Member WP pada komputer/browser lain.
-
-### Auto-sync
-
-Setelah akun terhubung, perubahan CRUD normal pada:
-
-- WP;
+- member/WP;
 - profil kewajiban;
 - task;
-- notes;
+- note;
 - activity log;
-- metadata/vault ciphertext;
+- metadata;
 
-akan dimirror ke Supabase secara otomatis.
+masuk ke IndexedDB lebih dulu lalu dikirim ke Supabase secara otomatis dalam batch kecil.
 
-## Data Excel & Vault
+Jika koneksi terputus, cache lokal tetap dapat ditampilkan. Perubahan yang belum terkirim ditahan sampai koneksi kembali tersedia selama tab masih terbuka.
 
-Workflow private import v0.6 tetap tersedia. Data produksi tidak pernah di-commit ke GitHub.
+## Data sensitif
 
-```text
-Workbook private
-  → Private import JSON
-  → Browser
-  → IndexedDB
-  → login Supabase
-  → Upload lokal → Supabase
-```
+Credential tidak disimpan sebagai bagian daftar WP. Saat tombol data sensitif dibuka, aplikasi meminta record credential member tersebut melalui API private.
 
-Credential sensitif dari workbook dienkripsi di browser sebelum disimpan. Supabase menerima ciphertext, bukan master passphrase.
+Data sensitif mencakup field workbook yang tersedia seperti Coretax, EFIN, Key DJP, email/password, NIK/KK, dan field terkait lainnya.
 
 ## Cloudflare Pages
 
@@ -89,7 +108,7 @@ Build output directory: dist
 Root directory: /
 ```
 
-Tidak diperlukan service key atau database password pada Cloudflare Pages.
+Folder `functions/` digunakan otomatis oleh Cloudflare Pages Functions. Tidak diperlukan Supabase service-role key di repository atau browser.
 
 ## UI
 
@@ -97,8 +116,8 @@ Navigasi utama tetap minimal:
 
 **Today · WP · Task · Deadline · Catatan · Lainnya**
 
-Status cloud ditampilkan melalui tombol **Cloud** di header dan status ringkas pada sidebar.
+Header menampilkan status **Database ✓** ketika Supabase aktif. Detail teknis database berada di panel Database agar dashboard tetap informatif tetapi tidak ramai.
 
-## Current limitation
+## Perangkat lain
 
-v0.7 memakai model kepemilikan **satu akun = satu dataset**. Ini aman untuk penggunaan pribadi dan sinkronisasi antar perangkat menggunakan akun Supabase yang sama. Shared workspace multi-staff dapat ditambahkan pada versi berikutnya tanpa membuka RLS secara global.
+Untuk komputer/browser lain, gunakan activation shortcut pribadi yang sama satu kali. Setelah cookie perangkat dibuat, database akan langsung terbuka pada kunjungan berikutnya.
