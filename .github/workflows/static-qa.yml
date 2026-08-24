@@ -23,6 +23,7 @@ jobs:
           node --check static/v06.js
           node --check static/v06-safe.js
           node --check static/v061.js
+          node --check static/v07.js
       - name: Build static Pages bundle
         run: npm run build
       - name: Verify output and integration order
@@ -36,17 +37,21 @@ jobs:
           test -f dist/v06.js
           test -f dist/v06-safe.js
           test -f dist/v061.js
+          test -f dist/v07.js
+          test -f dist/v07.css
           test -f dist/_headers
+          test -f supabase/migrations/003_member_wp_cloud_sync.sql
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
-          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js'].map(x=>html.indexOf(x))
+          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','@supabase/supabase-js@2.112.3','v07.js'].map(x=>html.indexOf(x))
           if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Static script integration order is invalid')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.6.1') throw new Error(`Unexpected version ${pkg.version}`)
-          if(!html.includes('v0.6.1')) throw new Error('v0.6.1 shell marker missing')
-          const v06=fs.readFileSync('dist/v06.js','utf8')
-          for(const marker of ['member-wp-private-import','PBKDF2','AES-GCM','v06ImportPrivatePackage']) if(!v06.includes(marker)) throw new Error(`Missing v0.6 marker: ${marker}`)
-          const v061=fs.readFileSync('dist/v061.js','utf8')
-          for(const marker of ['v061RemoveDemoRows','v06ImportOrigin','location.reload','Belum import di alamat ini']) if(!v061.includes(marker)) throw new Error(`Missing v0.6.1 marker: ${marker}`)
+          if(pkg.version!=='0.7.0') throw new Error(`Unexpected version ${pkg.version}`)
+          if(!html.includes('v0.7')) throw new Error('v0.7 shell marker missing')
+          const v07=fs.readFileSync('dist/v07.js','utf8')
+          for(const marker of ['signInWithPassword','signUp','member_wp_records','member_wp_sync_state','v07PushAll','v07PullAll','V07_SUPABASE_PUBLISHABLE_KEY']) if(!v07.includes(marker)) throw new Error(`Missing v0.7 marker: ${marker}`)
+          if(v07.includes('service_role')||v07.includes('sb_secret_')) throw new Error('Privileged Supabase key marker found in browser code')
+          const migration=fs.readFileSync('supabase/migrations/003_member_wp_cloud_sync.sql','utf8')
+          for(const marker of ['enable row level security','revoke all on public.member_wp_records from anon','to authenticated','auth.uid()']) if(!migration.toLowerCase().includes(marker.toLowerCase())) throw new Error(`Missing migration security marker: ${marker}`)
           NODE
