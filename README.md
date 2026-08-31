@@ -1,96 +1,84 @@
-# Member WP v0.9.1 — Antarmuka Bahasa Indonesia
+# Member WP v0.10 — Kontrol WP + Arsip Dokumen
 
-Member WP menggunakan **Cloudflare Pages + Pages Functions** dengan project Supabase **`member wp`** sebagai basis data pusat. Aplikasi hanya menampilkan data setelah pengguna berhasil masuk.
+Member WP adalah aplikasi pribadi untuk mengontrol setiap wajib pajak: data WP, tugas, batas waktu, catatan, riwayat aktivitas, data login, dan sekarang **arsip dokumen per WP**.
 
-## Bahasa antarmuka
+Aplikasi menggunakan **Cloudflare Pages + Pages Functions** dan project Supabase **`member wp`** sebagai database pusat.
 
-Mulai v0.9.1, seluruh antarmuka operasional menggunakan Bahasa Indonesia, termasuk:
+## Arsip per WP
 
-- halaman masuk;
-- dasbor hari ini;
-- daftar wajib pajak;
-- tugas dan tenggat;
-- pengingat;
-- catatan;
-- aktivitas dan jejak audit;
-- pusat perhatian;
-- template kewajiban;
-- kesehatan data;
-- basis data dan cadangan;
-- pesan status, kesalahan, dan konfirmasi.
+Setiap detail WP memiliki bagian **Arsip Dokumen**.
 
-Istilah teknis atau nama produk seperti **Supabase, Cloudflare, IndexedDB, Coretax, PBKDF2, HttpOnly, NPWP, PPh, PPN**, dan **EFIN** tetap dipertahankan agar tidak menimbulkan salah arti.
+Fitur:
 
-Lapisan penerjemah hanya mengubah teks antarmuka. Nama WP, judul tugas yang dibuat pengguna, catatan, dan nilai kredensial tidak diterjemahkan atau diubah.
+- upload beberapa file sekaligus;
+- kategori: Pajak, SPT, Bukti Bayar, Laporan Keuangan, Legal, Surat, Lainnya;
+- catatan opsional per upload;
+- daftar file khusus untuk WP tersebut;
+- tampil nama, kategori, ukuran, dan waktu upload;
+- download file;
+- hapus file;
+- saat WP benar-benar dihapus, arsip cloud WP tersebut ikut dibersihkan.
 
-## Masuk
+File yang didukung:
+
+- PDF;
+- JPG/JPEG, PNG, WebP;
+- Word DOC/DOCX;
+- Excel XLS/XLSX;
+- CSV;
+- XML;
+- ZIP;
+- TXT.
+
+Batas ukuran: **20 MB per file**.
+
+File disimpan di bucket Supabase Storage private `member-wp-archives`. File tidak disimpan di GitHub dan tidak memiliki URL publik permanen. Browser hanya bisa mengaksesnya setelah login Member WP berhasil melalui API private.
+
+Metadata file disimpan di tabel `public.member_wp_archives` dengan RLS aktif dan akses `anon` / `authenticated` dicabut.
+
+## Login
 
 Aplikasi memakai satu akun pribadi Member WP.
 
-- Nama pengguna aplikasi disediakan secara tetap untuk penggunaan pribadi.
-- Kata sandi **tidak disimpan di GitHub, JavaScript, localStorage, atau cookie**.
-- Kata sandi diverifikasi di sisi server terhadap hash **PBKDF2-SHA256** yang tersimpan di tabel pribadi Supabase.
-- Setelah masuk berhasil, server membuat sesi bertanda tangan dan Cloudflare menyimpannya sebagai cookie `HttpOnly; Secure; SameSite=Strict`.
-- Sesi berlaku maksimum 30 hari, atau sampai pengguna menekan **Keluar**.
-
-Nilai kredensial masuk produksi diprovision langsung di Supabase dan tidak ditulis ke migration repository.
+- Password tidak disimpan di GitHub, JavaScript, localStorage, atau cookie.
+- Password diverifikasi server-side dengan PBKDF2-SHA256.
+- Setelah login, Cloudflare menyimpan session sebagai cookie `HttpOnly; Secure; SameSite=Strict`.
+- Session maksimum 30 hari atau sampai tombol Keluar ditekan.
 
 ## Arsitektur
 
 ```text
-Masuk Member WP
-      ↓
+Browser
+   ↓ login
 Cloudflare Pages Function
-      ↓
+   ↓
 Supabase Edge Function
-      ├─ verifikasi kata sandi PBKDF2
-      ├─ sesi bertanda tangan
-      ↓
-Basis data pribadi
-      ├─ member_wp_single_records
-      ├─ member_wp_single_credentials
-      └─ member_wp_app_auth
+   ├─ Database WP / tugas / catatan
+   ├─ Data login WP
+   └─ Arsip Dokumen
+          ↓
+   Supabase Storage private
 ```
 
-Peramban tidak memegang Supabase service-role key dan tidak memiliki akses langsung ke tabel basis data.
+Browser tidak memegang Supabase service-role key dan tidak punya akses langsung ke tabel database atau Storage private.
 
-## Basis data produksi
-
-Basis data workbook saat ini berisi:
+## Database produksi
 
 - 233 WP
   - 72 Badan
   - 161 OP
-- 233 kredensial
+- 233 data login
 - 36 kendala
 - 40 kebutuhan dokumen
-- 73 riwayat daftar periksa
+- 73 riwayat checklist
 - 21 referensi
 - 4 grup NPWP duplikat
 
-Data Excel asli tidak disimpan di repository GitHub.
-
-## Keamanan
-
-- Tabel Member WP menggunakan RLS.
-- `anon` dan `authenticated` tidak memiliki hak akses langsung pada tabel pribadi.
-- Tabel `member_wp_app_auth` juga menolak akses peramban secara bawaan.
-- Kata sandi polos hanya ada saat pengguna mengirim formulir masuk dan tidak dicatat ke basis data.
-- Cookie sesi tidak dapat dibaca JavaScript.
-- Kredensial WP tidak ikut dimuat bersama daftar WP; kredensial hanya diminta setelah masuk ketika detail WP dibuka.
-- Pesan gagal masuk dibuat umum dan server menambahkan jeda kecil untuk memperlambat percobaan kata sandi berulang.
-- Keluar dari aplikasi membersihkan cookie sesi dan cache IndexedDB lokal.
-
 ## Sinkronisasi
 
-Setelah masuk berhasil:
+Data operasional seperti WP, profil kewajiban, tugas, catatan, aktivitas, dan metadata tetap memakai Supabase sebagai sumber utama dengan IndexedDB sebagai cache browser.
 
-1. Peramban mengambil snapshot basis data Supabase.
-2. Snapshot disimpan sebagai cache IndexedDB.
-3. Antarmuka Member WP dibuka.
-4. Perubahan WP, profil, tugas, catatan, aktivitas, dan metadata dikirim kembali ke Supabase secara otomatis.
-
-Jika sesi habis ketika aplikasi sedang digunakan, halaman masuk kembali muncul dan basis data ditutup sampai pengguna berhasil masuk lagi.
+File arsip **tidak disalin ke IndexedDB**. File tetap berada di Supabase Storage dan hanya diambil ketika pengguna menekan Download.
 
 ## Cloudflare Pages
 
@@ -101,12 +89,9 @@ Build output directory: dist
 Root directory: /
 ```
 
-Folder `functions/` di root dideploy otomatis sebagai Cloudflare Pages Functions.
-
 ## Skema
 
-- `004_member_wp_single_user_database.sql` — tabel basis data pribadi.
-- `005_member_wp_remove_legacy_auth_bootstrap.sql` — membersihkan alur autentikasi lama.
-- `006_member_wp_app_login.sql` — tabel hash untuk masuk aplikasi.
-
-Nilai kata sandi/hash produksi tidak disimpan di GitHub.
+- `004_member_wp_single_user_database.sql` — database personal.
+- `005_member_wp_remove_legacy_auth_bootstrap.sql` — cleanup flow lama.
+- `006_member_wp_app_login.sql` — hash login aplikasi.
+- `007_member_wp_archives.sql` — metadata arsip + bucket Storage private.
