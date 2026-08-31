@@ -4,32 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#163a55">
-<title>Member WP v0.9.1 — Masuk</title>
+<title>Member WP v0.9.2 — Login</title>
 <link rel="stylesheet" href="./app.css">
 <link rel="stylesheet" href="./v04.css">
 <link rel="stylesheet" href="./v05.css">
 <link rel="stylesheet" href="./v051.css">
 <link rel="stylesheet" href="./v06.css">
-<link rel="stylesheet" href="./v09.css?v=091">
+<link rel="stylesheet" href="./v09.css?v=092">
 </head>
 <body>
 <div id="v09Login" class="v09-login show">
   <form class="v09-login-card" onsubmit="return v09Login(event)">
-    <div class="v09-login-brand"><div class="mark">M</div><div><b>Member WP</b><small>Basis Data Pribadi</small></div></div>
-    <h1>Masuk</h1>
-    <p class="intro">Akses basis data Member WP pribadi.</p>
-    <div class="field"><label>Nama Pengguna</label><input id="v09Username" type="text" value="memberwp" autocomplete="username" spellcheck="false"></div>
-    <div class="field"><label>Kata Sandi</label><input id="v09Password" type="password" autocomplete="current-password"></div>
-    <button id="v09LoginButton" class="btn primary" type="submit">Masuk</button>
+    <div class="v09-login-brand"><div class="mark">M</div><div><b>Member WP</b><small>Database Pribadi</small></div></div>
+    <h1>Login</h1>
+    <p class="intro">Masuk untuk buka data Member WP.</p>
+    <div class="field"><label>Username</label><input id="v09Username" type="text" value="memberwp" autocomplete="username" spellcheck="false"></div>
+    <div class="field"><label>Password</label><input id="v09Password" type="password" autocomplete="current-password"></div>
+    <button id="v09LoginButton" class="btn primary" type="submit">Login</button>
     <div id="v09LoginError" class="v09-login-error"></div>
-    <div class="v09-login-note">Sesi disimpan sebagai cookie HttpOnly. Kata sandi tidak disimpan di peramban atau sumber aplikasi.</div>
+    <div class="v09-login-note">Login disimpan dengan aman di Browser. Password tidak disimpan di aplikasi.</div>
   </form>
 </div>
-<div id="loading" class="loading"><div><b>Member WP v0.9.1</b><br><small>Memeriksa sesi...</small></div></div>
+<div id="loading" class="loading"><div><b>Member WP v0.9.2</b><br><small>Mengecek login...</small></div></div>
 <div id="appRoot" hidden>
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Pusat Kendali v0.9.1</small></div></div>
+  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Kontrol WP v0.9.2</small></div></div>
   <nav class="nav" id="nav">
     <button data-view="dashboard" class="active"><span>Hari Ini</span></button>
     <button data-view="taxpayers"><span>WP</span></button>
@@ -40,11 +40,11 @@
 </aside>
 <main class="main">
   <header class="top">
-    <div><h1 id="title">Dasbor Hari Ini</h1><p id="subtitle">Prioritas kerja, tenggat, dan tindak lanjut</p></div>
-    <div class="topactions"><button class="btn" onclick="exportBackup()">Cadangan</button><button class="btn primary" onclick="openMemberForm()">+ WP</button></div>
+    <div><h1 id="title">Hari Ini</h1><p id="subtitle">Yang perlu dikerjakan, batas waktu, dan follow-up</p></div>
+    <div class="topactions"><button class="btn" onclick="exportBackup()">Backup</button><button class="btn primary" onclick="openMemberForm()">+ WP</button></div>
   </header>
   <div class="content">
-    <div class="notice v051-notice" hidden><b>Sinkronisasi</b> · memperbarui basis data...</div>
+    <div class="notice v051-notice" hidden><b>Sinkronisasi</b> · update database...</div>
     <section id="dashboard" class="view active"></section>
     <section id="taxpayers" class="view"></section>
     <section id="compliance" class="view"></section>
@@ -68,5 +68,6 @@
 <script src="./v09.js?v=090" defer></script>
 <script src="./v091.js?v=091" defer></script>
 <script src="./v091-safe.js?v=091" defer></script>
+<script src="./v092.js?v=092" defer></script>
 </body>
 </html>
