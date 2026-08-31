@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Check JavaScript syntax
+      - name: Periksa sintaks JavaScript
         run: |
           node --check static/app.js
           node --check static/v04.js
@@ -24,14 +24,18 @@ jobs:
           node --check static/v06-safe.js
           node --check static/v061.js
           node --check static/v09.js
+          node --check static/v091.js
+          node --check static/v091-safe.js
           node --check functions/api/member-wp.js
-      - name: Build static Pages bundle
+      - name: Build bundle Cloudflare Pages
         run: npm run build
-      - name: Verify v0.9 output and login security
+      - name: Verifikasi v0.9.1, Bahasa Indonesia, dan keamanan login
         run: |
           test -f dist/index.html
           test -f dist/app.js
           test -f dist/v09.js
+          test -f dist/v091.js
+          test -f dist/v091-safe.js
           test -f dist/v09.css
           test -f dist/_headers
           test -f functions/api/member-wp.js
@@ -42,23 +46,30 @@ jobs:
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
-          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v09.js'].map(x=>html.indexOf(x))
-          if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Static script integration order is invalid')
-          if(html.includes('v08.js')||html.includes('v081.js')||html.includes('@supabase/supabase-js')||html.includes('v07.js')) throw new Error('Legacy browser auth/device runtime is still loaded')
-          if(!html.includes('id="v09Login" class="v09-login show"')) throw new Error('Login must block first paint')
+          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v09.js','v091.js','v091-safe.js'].map(x=>html.indexOf(x))
+          if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Urutan integrasi skrip statis tidak valid')
+          if(html.includes('v08.js')||html.includes('v081.js')||html.includes('@supabase/supabase-js')||html.includes('v07.js')) throw new Error('Runtime autentikasi/perangkat lama masih dimuat')
+          if(!html.includes('id="v09Login" class="v09-login show"')) throw new Error('Halaman masuk harus memblokir tampilan awal')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.9.0') throw new Error(`Unexpected version ${pkg.version}`)
-          if(!html.includes('v0.9')) throw new Error('v0.9 shell marker missing')
+          if(pkg.version!=='0.9.1') throw new Error(`Versi tidak sesuai: ${pkg.version}`)
+          if(!html.includes('v0.9.1')) throw new Error('Penanda v0.9.1 tidak ditemukan')
+          const shellForbidden=['>Today<','>Task<','Private Database','>Username<','>Password<','Memeriksa session','Control Center','Today Dashboard','>Backup<','>Private<','deadline, dan follow-up']
+          for(const term of shellForbidden) if(html.includes(term)) throw new Error(`Teks shell belum diterjemahkan: ${term}`)
+          for(const term of ['Hari Ini','Tugas','Basis Data Pribadi','Nama Pengguna','Kata Sandi','Pusat Kendali v0.9.1','Dasbor Hari Ini','Cadangan','tenggat, dan tindak lanjut']) if(!html.includes(term)) throw new Error(`Teks Indonesia wajib tidak ditemukan: ${term}`)
           const v09=fs.readFileSync('dist/v09.js','utf8')
-          for(const marker of ['action=login','action=logout','action=bootstrap','v09Credential','v09WipeLocal','Session berakhir']) if(!v09.includes(marker)) throw new Error(`Missing v0.9 marker: ${marker}`)
-          for(const forbidden of ['service_role','sb_secret_','SUPABASE_SERVICE_ROLE_KEY','#activate=','member_wp_device']) if(v09.includes(forbidden)) throw new Error(`Forbidden browser marker: ${forbidden}`)
+          for(const marker of ['action=login','action=logout','action=bootstrap','v09Credential','v09WipeLocal','Session berakhir']) if(!v09.includes(marker)) throw new Error(`Penanda v0.9 hilang: ${marker}`)
+          for(const forbidden of ['service_role','sb_secret_','SUPABASE_SERVICE_ROLE_KEY','#activate=','member_wp_device']) if(v09.includes(forbidden)) throw new Error(`Penanda terlarang di peramban: ${forbidden}`)
+          const v091=fs.readFileSync('dist/v091.js','utf8')
+          for(const marker of ['Antarmuka penuh Bahasa Indonesia','Hari Ini','Tugas','Tenggat','Pengingat','Kata Sandi','Pusat Perhatian','Daftar Prioritas','Menunggu Tinjauan','Menunggu Klien','Kredensial','v091TranslateNode']) if(!v091.includes(marker)) throw new Error(`Penanda lokalisasi hilang: ${marker}`)
+          const safe=fs.readFileSync('dist/v091-safe.js','utf8')
+          if(!safe.includes('after!==before')) throw new Error('Perlindungan loop penerjemah DOM tidak ditemukan')
           const bridge=fs.readFileSync('functions/api/member-wp.js','utf8')
-          for(const marker of ['member_wp_session','HttpOnly','SameSite=Strict','action===\'login\'','x-member-wp-session']) if(!bridge.includes(marker)) throw new Error(`Missing API bridge marker: ${marker}`)
-          if(bridge.includes('TOKEN_HASH')||bridge.includes('member_wp_device')) throw new Error('Legacy device auth remains in bridge')
+          for(const marker of ['member_wp_session','HttpOnly','SameSite=Strict','action===\'login\'','x-member-wp-session']) if(!bridge.includes(marker)) throw new Error(`Penanda API bridge hilang: ${marker}`)
+          if(bridge.includes('TOKEN_HASH')||bridge.includes('member_wp_device')) throw new Error('Autentikasi perangkat lama masih ada di bridge')
           const edge=fs.readFileSync('supabase/functions/member-wp-personal-api/index.ts','utf8')
-          for(const marker of ['member_wp_app_auth','PBKDF2','x-member-wp-session','makeSession','SUPABASE_SERVICE_ROLE_KEY','member_wp_single_records']) if(!edge.includes(marker)) throw new Error(`Missing Edge Function marker: ${marker}`)
+          for(const marker of ['member_wp_app_auth','PBKDF2','x-member-wp-session','makeSession','SUPABASE_SERVICE_ROLE_KEY','member_wp_single_records']) if(!edge.includes(marker)) throw new Error(`Penanda Edge Function hilang: ${marker}`)
           const migration=fs.readFileSync('supabase/migrations/006_member_wp_app_login.sql','utf8').toLowerCase()
-          for(const marker of ['member_wp_app_auth','enable row level security','revoke all on public.member_wp_app_auth from anon, authenticated','provisioned out-of-band']) if(!migration.includes(marker)) throw new Error(`Missing login migration marker: ${marker}`)
-          const combined=html+v09+bridge+edge+migration
-          if(combined.includes('bravo@911')) throw new Error('Plain password leaked into repository source')
+          for(const marker of ['member_wp_app_auth','enable row level security','revoke all on public.member_wp_app_auth from anon, authenticated','provisioned out-of-band']) if(!migration.includes(marker)) throw new Error(`Penanda migrasi login hilang: ${marker}`)
+          const combined=html+v09+v091+safe+bridge+edge+migration
+          if(combined.includes('bravo@911')) throw new Error('Kata sandi polos bocor ke source repository')
           NODE
