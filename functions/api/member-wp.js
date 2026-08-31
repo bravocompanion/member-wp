@@ -29,6 +29,8 @@ export async function onRequest({request}){
   const session=cookieValue(request,COOKIE);if(!session)return response({error:'unauthorized'},401);
   const r=await proxy(upstream,request,session);if(!r)return response({error:'upstream_unavailable'},502);
   const outHeaders={'content-type':r.headers.get('content-type')||'application/json','cache-control':'no-store','x-content-type-options':'nosniff'};
+  const disposition=r.headers.get('content-disposition');if(disposition)outHeaders['content-disposition']=disposition;
+  const length=r.headers.get('content-length');if(length)outHeaders['content-length']=length;
   if(r.status===401)outHeaders['set-cookie']=clearCookie();
   return new Response(r.body,{status:r.status,headers:outHeaders});
 }
