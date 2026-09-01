@@ -1,0 +1,7 @@
+/* Member WP v0.10.1 — Data Login */
+.v0101-login-block{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.v0101-login-block h3{margin:0 0 4px;font-size:14px}.v0101-login-block .splitHead p{margin:0;color:var(--muted);font-size:10px}
+.v0101-show-secret{display:inline-flex;align-items:center;gap:7px;margin:8px 0 10px;font-size:10px;color:var(--muted);cursor:pointer}
+.v0101-save-status{min-height:16px;margin-top:8px;font-size:10px;color:var(--danger,#a33)}
+.v0101-login-manage .actions{margin-top:10px}
+@media(max-width:700px){.v0101-login-block{margin-top:12px;padding-top:12px}}

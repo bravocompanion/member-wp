@@ -28,34 +28,51 @@ jobs:
           node --check static/v091-safe.js
           node --check static/v092.js
           node --check static/v010.js
+          node --check static/v0101.js
           node --check functions/api/member-wp.js
       - name: Build bundle Cloudflare Pages
         run: npm run build
-      - name: Verifikasi v0.10 arsip per WP dan keamanan
+      - name: Verifikasi v0.10.1 Data Login WP dan keamanan
         run: |
           test -f dist/index.html
           test -f dist/v010.js
           test -f dist/v010.css
+          test -f dist/v0101.js
+          test -f dist/v0101.css
           test -f dist/_headers
           test -f functions/api/member-wp.js
           test -f supabase/migrations/007_member_wp_archives.sql
           test -f supabase/functions/member-wp-personal-api/index.ts
+          test -f supabase/functions/member-wp-credential-api/index.ts
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
-          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v09.js','v091.js','v091-safe.js','v092.js','v010.js'].map(x=>html.indexOf(x))
+          const order=['app.js','v04.js','v05.js','v051.js','v06.js','v06-safe.js','v061.js','v09.js','v091.js','v091-safe.js','v092.js','v010.js','v0101.js'].map(x=>html.indexOf(x))
           if(order.some(x=>x<0)||!order.every((x,i)=>i===0||x>order[i-1])) throw new Error('Urutan skrip tidak benar')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.10.0') throw new Error(`Versi tidak sesuai: ${pkg.version}`)
-          if(!html.includes('v0.10')||!html.includes('v010.js')||!html.includes('v010.css')) throw new Error('Integrasi v0.10 tidak lengkap')
+          if(pkg.version!=='0.10.1') throw new Error(`Versi tidak sesuai: ${pkg.version}`)
+          if(!html.includes('v0.10.1')||!html.includes('v0101.js')||!html.includes('v0101.css')) throw new Error('Integrasi v0.10.1 tidak lengkap')
+
           const v010=fs.readFileSync('dist/v010.js','utf8')
-          for(const marker of ['Arsip Dokumen','archive-upload','archive-download','archive-delete','archive-delete-all','20 MB','Upload Arsip','v010LoadArchives']) if(!v010.includes(marker)) throw new Error(`Fitur arsip hilang: ${marker}`)
+          for(const marker of ['Arsip Dokumen','archive-upload','archive-download','archive-delete','20 MB']) if(!v010.includes(marker)) throw new Error(`Fitur arsip hilang: ${marker}`)
+
+          const v0101=fs.readFileSync('dist/v0101.js','utf8')
+          for(const marker of ['Data Login','Username / Email Login','Password Login','Coretax Key','Coretax Passphrase','EFIN','Key DJP','credential-upsert','v0101SaveMember','v0101ViewLogin']) if(!v0101.includes(marker)) throw new Error(`Fitur Data Login hilang: ${marker}`)
+          if(!v0101.includes("'data_login_update','Data Login diperbarui.'")) throw new Error('Activity log Data Login harus bebas nilai rahasia')
+
           const bridge=fs.readFileSync('functions/api/member-wp.js','utf8')
-          for(const marker of ['member_wp_session','HttpOnly','SameSite=Strict','content-disposition','x-member-wp-session']) if(!bridge.includes(marker)) throw new Error(`Penanda API bridge hilang: ${marker}`)
+          for(const marker of ['member_wp_session','HttpOnly','SameSite=Strict','CREDENTIAL_UPSTREAM','credential-upsert','credential-delete','x-member-wp-session']) if(!bridge.includes(marker)) throw new Error(`Penanda API bridge hilang: ${marker}`)
+
           const edge=fs.readFileSync('supabase/functions/member-wp-personal-api/index.ts','utf8')
-          for(const marker of ['member_wp_archives','member-wp-archives','archive-upload','archive-download','archive-delete','ARCHIVE_MAX_BYTES','SUPABASE_SERVICE_ROLE_KEY']) if(!edge.includes(marker)) throw new Error(`Backend arsip hilang: ${marker}`)
+          for(const marker of ['member_wp_archives','member-wp-archives','archive-upload','archive-download','SUPABASE_SERVICE_ROLE_KEY']) if(!edge.includes(marker)) throw new Error(`Backend utama hilang: ${marker}`)
+
+          const credentialApi=fs.readFileSync('supabase/functions/member-wp-credential-api/index.ts','utf8')
+          for(const marker of ['credential-upsert','credential-delete','loginUsername','loginPassword','member_wp_single_credentials','member_wp_single_records','x-member-wp-session','SUPABASE_SERVICE_ROLE_KEY']) if(!credentialApi.includes(marker)) throw new Error(`Backend Data Login hilang: ${marker}`)
+          if(!credentialApi.includes("console.error('member-wp-credential-api',error)")) throw new Error('Error logging credential API harus tidak mencetak payload')
+
           const migration=fs.readFileSync('supabase/migrations/007_member_wp_archives.sql','utf8').toLowerCase()
           for(const marker of ['member_wp_archives','enable row level security','revoke all on public.member_wp_archives from anon, authenticated','member-wp-archives','20971520']) if(!migration.includes(marker)) throw new Error(`Migration arsip tidak lengkap: ${marker}`)
-          const combined=html+v010+bridge+edge+migration
-          if(combined.includes('bravo@911')) throw new Error('Password asli tidak boleh ada di source repository')
+
+          const combined=html+v010+v0101+bridge+edge+credentialApi+migration
+          if(combined.includes('bravo@911')) throw new Error('Password aplikasi tidak boleh ada di source repository')
           NODE
