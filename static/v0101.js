@@ -109,6 +109,15 @@ async function v0101SaveMember(memberId,isNew){
     else alert('Data WP tersimpan, tetapi Data Login belum berhasil disimpan. Coba lagi.');
   }finally{v0101Saving=false;if(btn){btn.disabled=false;btn.textContent='Simpan WP'}}
 }
+async function v0101ViewLogin(id){
+  try{
+    const data=await v09Credential(id);if(!data)return alert('Belum ada Data Login untuk WP ini.');
+    modal(`Data Login — ${esc(tp(id)?.name||'WP')}`,`<div data-user-content>${v06SensitiveHtml(data)}</div>`);
+  }catch(e){
+    if(e.status===401){v09Ready=false;v09ShowLogin('Login sudah habis. Silakan login lagi.');return}
+    alert('Data Login belum bisa dibuka. Coba lagi.');
+  }
+}
 function v0101InstallLabels(){
   if(typeof v06FieldLabel==='function'){
     const previous=v06FieldLabel;
@@ -117,11 +126,10 @@ function v0101InstallLabels(){
 }
 function v0101EnhanceMemberDetail(id){
   const body=document.getElementById('drawerBody');if(!body||currentTaxpayerId!==id)return;
-  let card=document.getElementById('v0101LoginManage');
-  if(card)card.remove();
+  let card=document.getElementById('v0101LoginManage');if(card)card.remove();
   card=document.createElement('div');card.id='v0101LoginManage';card.className='card v0101-login-manage';
   const has=v09CredentialIds.has(id);
-  card.innerHTML=`<div class="splitHead"><div><h2>Data Login</h2><p>Username, password, Coretax, EFIN, dan Key DJP untuk WP ini.</p></div>${has?badge('Tersimpan','ok'):badge('Belum ada')}</div><div class="actions"><button class="btn primary" onclick="openMemberForm('${esc(id)}')">${has?'Edit Data Login':'Tambah Data Login'}</button>${has?`<button class="btn" onclick="v06UnlockVault('${esc(id)}')">Lihat Data Login</button>`:''}</div>`;
+  card.innerHTML=`<div class="splitHead"><div><h2>Data Login</h2><p>Username, password, Coretax, EFIN, dan Key DJP untuk WP ini.</p></div>${has?badge('Tersimpan','ok'):badge('Belum ada')}</div><div class="actions"><button class="btn primary" onclick="openMemberForm('${esc(id)}')">${has?'Edit Data Login':'Tambah Data Login'}</button>${has?`<button class="btn" onclick="v0101ViewLogin('${esc(id)}')">Lihat Data Login</button>`:''}</div>`;
   const archive=document.getElementById('v010ArchiveCard'),excel=document.getElementById('v06ExcelCard');
   if(archive)body.insertBefore(card,archive);else if(excel)body.insertBefore(card,excel);else body.appendChild(card);
 }
@@ -129,9 +137,21 @@ function v0101Install(){
   openMemberForm=v0101OpenMemberForm;
   v0101InstallLabels();
   const prevOpen=openTaxpayer;openTaxpayer=function(id,show=true){prevOpen(id,show);setTimeout(()=>v0101EnhanceMemberDetail(id),20)};
+  const prevDelete=deleteMember;deleteMember=async function(id){
+    const existed=tp(id),hadCredential=v09CredentialIds.has(id);await prevDelete(id);
+    if(existed&&!tp(id)&&hadCredential){
+      try{
+        await v09Fetch(`${V0101_API}?action=credential-delete`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({taxpayerId:id})});
+        v09CredentialIds.delete(id);v09CredentialCache.delete(id);v0101LoadedCredential.delete(id);v09RemoteCounts.credentials=Math.max(0,(Number(v09RemoteCounts.credentials)||1)-1);
+      }catch(e){
+        if(e.status===401){v09Ready=false;v09ShowLogin('Login sudah habis. Silakan login lagi.');return}
+        alert('WP sudah dihapus, tetapi Data Login cloud belum berhasil dibersihkan.');
+      }
+    }
+  };
   document.title='Member WP v0.10.1 — Data Login WP';
   const brand=document.querySelector('.brand small');if(brand)brand.textContent='Kontrol WP v0.10.1';
   const loading=document.querySelector('#loading b');if(loading)loading.textContent='Member WP v0.10.1';
 }
-Object.assign(window,{v0101OpenMemberForm,v0101SaveMember,v0101ToggleSecrets});
+Object.assign(window,{v0101OpenMemberForm,v0101SaveMember,v0101ToggleSecrets,v0101ViewLogin});
 setTimeout(v0101Install,330);
