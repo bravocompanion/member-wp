@@ -55,7 +55,7 @@ jobs:
             if(marker==='CORETAX') continue
             if(!edge.includes(marker)) throw new Error('Backend checklist marker hilang: '+marker)
           }
-          for(const forbidden of ['member_wp_single_credentials','member_wp_archives','archive-upload','archive-download','credential']) if(edge.includes(forbidden)) throw new Error('Backend sensitif masih aktif: '+forbidden)
+          for(const forbidden of ['member_wp_single_credentials','member_wp_archives','archive-upload','archive-download','credential-upsert','credential-delete']) if(edge.includes(forbidden)) throw new Error('Backend sensitif masih aktif: '+forbidden)
 
           const migration=fs.readFileSync('supabase/migrations/008_member_wp_checklist_only.sql','utf8')
           for(const marker of ['delete from public.member_wp_single_credentials','delete from public.member_wp_archives','CORETAX_DJP_WEEKLY','Monitoring Coretax DJP']) if(!migration.includes(marker)) throw new Error('Cleanup migration tidak lengkap: '+marker)
