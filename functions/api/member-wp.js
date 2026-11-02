@@ -1,5 +1,4 @@
 const UPSTREAM='https://apnbksfkenonbsvqbuok.supabase.co/functions/v1/member-wp-personal-api';
-const CREDENTIAL_UPSTREAM='https://apnbksfkenonbsvqbuok.supabase.co/functions/v1/member-wp-credential-api';
 const COOKIE='member_wp_session';
 
 function response(data,status=200,extra={}){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff',...extra}})}
@@ -18,8 +17,7 @@ export async function onRequest({request}){
 
   if(action==='logout')return response({ok:true},200,{'set-cookie':clearCookie()});
 
-  const credentialWrite=['credential-upsert','credential-delete'].includes(action);
-  const upstream=new URL(credentialWrite?CREDENTIAL_UPSTREAM:UPSTREAM);upstream.search=url.search;
+  const upstream=new URL(UPSTREAM);upstream.search=url.search;
   if(action==='login'){
     if(request.method!=='POST')return response({error:'method_not_allowed'},405);
     const r=await proxy(upstream,request);if(!r)return response({error:'upstream_unavailable'},502);
@@ -31,8 +29,6 @@ export async function onRequest({request}){
   const session=cookieValue(request,COOKIE);if(!session)return response({error:'unauthorized'},401);
   const r=await proxy(upstream,request,session);if(!r)return response({error:'upstream_unavailable'},502);
   const outHeaders={'content-type':r.headers.get('content-type')||'application/json','cache-control':'no-store','x-content-type-options':'nosniff'};
-  const disposition=r.headers.get('content-disposition');if(disposition)outHeaders['content-disposition']=disposition;
-  const length=r.headers.get('content-length');if(length)outHeaders['content-length']=length;
   if(r.status===401)outHeaders['set-cookie']=clearCookie();
   return new Response(r.body,{status:r.status,headers:outHeaders});
 }
