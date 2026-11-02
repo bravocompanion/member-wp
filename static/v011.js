@@ -19,7 +19,7 @@ function v011Percent(done,total){return total?Math.round(done/total*100):0}
 function v011DateTime(value){if(!value)return'—';const d=new Date(value);return Number.isNaN(d.getTime())?'—':d.toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
 
 async function v011EnsureWeek(){
-  if(v011Seeding||!v09Ready||!state.taxpayers.length)return;
+  if(v011Seeding||!db||!state.taxpayers.length)return;
   v011Seeding=true;
   try{
     const w=v011WeekInfo(),existing=new Set(v011WeeklyTasks(w.start).map(t=>t.taxpayerId)),at=now();
@@ -29,7 +29,7 @@ async function v011EnsureWeek(){
       await put('tasks',{id:v011TaskId(x.id,w.start),taxpayerId:x.id,title:'Monitoring Coretax DJP',code:V011_CODE,kind:'weekly_monitoring',cadence:'weekly',status:'not_started',priority:'medium',dueDate:w.end,weekStart:w.start,weekEnd:w.end,completedAt:null,createdAt:at,updatedAt:at});
       made++;
     }
-    if(made){await loadState();if(typeof v09Flush==='function')await v09Flush();renderAll()}
+    if(made){await loadState();if(v09Ready&&typeof v09Flush==='function')await v09Flush();renderAll()}
   }finally{v011Seeding=false}
 }
 
@@ -90,7 +90,8 @@ function v011Go(id){
   document.getElementById('title').textContent=titles[target][0];document.getElementById('subtitle').textContent=titles[target][1];v011RenderAll();
 }
 function v011CleanShell(){
-  const nav=document.getElementById('nav');if(nav)nav.innerHTML='<button data-view="dashboard" class="active"><span>Monitoring</span></button><button data-view="taxpayers"><span>Semua WP</span></button><button data-view="compliance"><span>Riwayat</span></button>';
+  const active=document.querySelector('.view.active')?.id||'dashboard';
+  const nav=document.getElementById('nav');if(nav)nav.innerHTML='<button data-view="dashboard" class="'+(active==='dashboard'?'active':'')+'"><span>Monitoring</span></button><button data-view="taxpayers" class="'+(active==='taxpayers'?'active':'')+'"><span>Semua WP</span></button><button data-view="compliance" class="'+(active==='compliance'?'active':'')+'"><span>Riwayat</span></button>';
   document.querySelector('.topactions button[onclick="exportBackup()"]')?.remove();
   document.getElementById('v09DbButton')?.remove();
   const brand=document.querySelector('.brand small');if(brand)brand.textContent='Checklist WP v0.11';
