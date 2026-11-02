@@ -4,46 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#163a55">
-<title>Member WP v0.10.1 — Login</title>
+<title>Member WP v0.11 — Monitoring Coretax DJP</title>
 <link rel="stylesheet" href="./app.css">
-<link rel="stylesheet" href="./v04.css">
-<link rel="stylesheet" href="./v05.css">
-<link rel="stylesheet" href="./v051.css">
-<link rel="stylesheet" href="./v06.css">
-<link rel="stylesheet" href="./v09.css?v=092">
-<link rel="stylesheet" href="./v010.css?v=010">
-<link rel="stylesheet" href="./v0101.css?v=0101">
+<link rel="stylesheet" href="./v09.css?v=090">\n<link rel="stylesheet" href="./v011.css?v=011">
 </head>
 <body>
 <div id="v09Login" class="v09-login show">
   <form class="v09-login-card" onsubmit="return v09Login(event)">
-    <div class="v09-login-brand"><div class="mark">M</div><div><b>Member WP</b><small>Database Pribadi</small></div></div>
+    <div class="v09-login-brand"><div class="mark">M</div><div><b>Member WP</b><small>Checklist Pribadi</small></div></div>
     <h1>Login</h1>
-    <p class="intro">Masuk untuk buka data Member WP.</p>
+    <p class="intro">Login untuk buka checklist Monitoring Coretax DJP.</p>
     <div class="field"><label>Username</label><input id="v09Username" type="text" value="memberwp" autocomplete="username" spellcheck="false"></div>
     <div class="field"><label>Password</label><input id="v09Password" type="password" autocomplete="current-password"></div>
     <button id="v09LoginButton" class="btn primary" type="submit">Login</button>
     <div id="v09LoginError" class="v09-login-error"></div>
-    <div class="v09-login-note">Login disimpan dengan aman di Browser. Password tidak disimpan di aplikasi.</div>
+    <div class="v09-login-note">Aplikasi ini hanya menyimpan checklist WP.</div>
   </form>
 </div>
-<div id="loading" class="loading"><div><b>Member WP v0.10.1</b><br><small>Mengecek login...</small></div></div>
+<div id="loading" class="loading"><div><b>Member WP v0.11</b><br><small>Mengecek login...</small></div></div>
 <div id="appRoot" hidden>
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Kontrol WP v0.10.1</small></div></div>
-  <nav class="nav" id="nav">
-    <button data-view="dashboard" class="active"><span>Hari Ini</span></button>
-    <button data-view="taxpayers"><span>WP</span></button>
-    <button data-view="compliance"><span>Tugas</span></button>
-    <button data-view="notes"><span>Catatan</span></button>
-  </nav>
-  <div class="sidefoot"><b>Pribadi</b> · Supabase</div>
+  <div class="brand"><div class="mark">M</div><div><b>Member WP</b><small>Checklist WP v0.11</small></div></div>
+  <nav class="nav" id="nav">\n    <button data-view="dashboard" class="active"><span>Monitoring</span></button>\n    <button data-view="taxpayers"><span>Semua WP</span></button>\n    <button data-view="compliance"><span>Riwayat</span></button>\n  </nav>
+  <div class="sidefoot"><b>Checklist Pribadi</b><br><span>Monitoring Coretax DJP</span></div>
 </aside>
 <main class="main">
   <header class="top">
-    <div><h1 id="title">Hari Ini</h1><p id="subtitle">Yang perlu dikerjakan, batas waktu, dan follow-up</p></div>
-    <div class="topactions"><button class="btn" onclick="exportBackup()">Backup</button><button class="btn primary" onclick="openMemberForm()">+ WP</button></div>
+    <div><h1 id="title">Monitoring Coretax DJP</h1><p id="subtitle">Checklist mingguan semua WP</p></div>
+    <div class="topactions"><button class="btn primary" onclick="openMemberForm()">+ WP</button></div>
   </header>
   <div class="content">
     <div class="notice v051-notice" hidden><b>Sinkronisasi</b> · update database...</div>
@@ -60,18 +49,5 @@
 </div>
 <div id="drawer" class="drawer"><button class="close" onclick="closeDrawer()" aria-label="Tutup">×</button><div id="drawerBody"></div></div>
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div id="modalBody" class="modalbox"></div></div>
-<script src="./app.js" defer></script>
-<script src="./v04.js" defer></script>
-<script src="./v05.js" defer></script>
-<script src="./v051.js" defer></script>
-<script src="./v06.js" defer></script>
-<script src="./v06-safe.js" defer></script>
-<script src="./v061.js?v=061" defer></script>
-<script src="./v09.js?v=090" defer></script>
-<script src="./v091.js?v=091" defer></script>
-<script src="./v091-safe.js?v=091" defer></script>
-<script src="./v092.js?v=092" defer></script>
-<script src="./v010.js?v=010" defer></script>
-<script src="./v0101.js?v=0101" defer></script>
-</body>
+<script src="./app.js" defer></script>\n<script src="./v09.js?v=090" defer></script>\n<script src="./v011.js?v=011" defer></script>\n</body>
 </html>
