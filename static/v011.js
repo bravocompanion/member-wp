@@ -1,5 +1,5 @@
-/* Member WP v0.11 — Checklist Monitoring Coretax DJP */
-const V011_VERSION='0.11.0';
+/* Member WP v0.12 — Checklist Monitoring Coretax DJP + Cloudflare D1 */
+const V011_VERSION='0.12.0';
 const V011_CODE='CORETAX_DJP_WEEKLY';
 let v011Seeding=false;
 
@@ -94,7 +94,7 @@ function v011CleanShell(){
   const nav=document.getElementById('nav');if(nav)nav.innerHTML='<button data-view="dashboard" class="'+(active==='dashboard'?'active':'')+'"><span>Monitoring</span></button><button data-view="taxpayers" class="'+(active==='taxpayers'?'active':'')+'"><span>Semua WP</span></button><button data-view="compliance" class="'+(active==='compliance'?'active':'')+'"><span>Riwayat</span></button>';
   document.querySelector('.topactions button[onclick="exportBackup()"]')?.remove();
   document.getElementById('v09DbButton')?.remove();
-  const brand=document.querySelector('.brand small');if(brand)brand.textContent='Checklist WP v0.11';
+  const brand=document.querySelector('.brand small');if(brand)brand.textContent='Checklist WP v0.12';
   const foot=document.querySelector('.sidefoot');if(foot)foot.innerHTML='<b>Checklist Pribadi</b><br><span>Monitoring Coretax DJP</span>';
 }
 function v011OpenMemberForm(id=''){
@@ -119,7 +119,7 @@ function v011OpenTaxpayer(id,show=true){
 }
 
 function v011Install(){
-  document.title='Member WP v0.11 — Monitoring Coretax DJP';
+  document.title='Member WP v0.12 — Monitoring Coretax DJP';
   go=v011Go;renderAll=v011RenderAll;openMemberForm=v011OpenMemberForm;openTaxpayer=v011OpenTaxpayer;deleteMember=v011DeleteMember;
   const prevUpdate=v09UpdateUi;v09UpdateUi=function(){prevUpdate();v011CleanShell()};
   const loginBrand=document.querySelector('.v09-login-brand small');if(loginBrand)loginBrand.textContent='Checklist Pribadi';
