@@ -91,4 +91,4 @@ IndexedDB hanya dipakai sebagai cache/offline layer setelah login. Saat logout, 
 
 ## Source lama
 
-Folder migration/source Supabase lama dapat tetap berada di Git history sebagai referensi historis, tetapi runtime v0.12 tidak membutuhkan Supabase.
+Source dan migration Supabase sudah dikeluarkan dari tree aktif v0.12. Riwayat commit lama tetap menjadi bagian dari Git history, tetapi runtime dan source aktif sekarang menggunakan Cloudflare D1.
