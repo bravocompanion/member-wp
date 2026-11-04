@@ -1,55 +1,88 @@
-# Cloudflare Pages Deployment — Member WP v0.9
+# Cloudflare Pages Deployment — Member WP v0.12
 
-Member WP production uses **Cloudflare Pages + Pages Functions** with Supabase project `member wp` as the private database backend.
+Member WP production menggunakan **Cloudflare Pages + Pages Functions + Cloudflare D1**.
 
-Cloudflare Pages settings:
+Tidak ada dependency runtime ke Supabase.
+
+## Pages settings
 
 - Production branch: `main`
 - Build command: `npm run build`
 - Build output directory: `dist`
 - Root directory: `/`
 
-No database password, Supabase service-role key, or Member WP login password is committed to GitHub.
+## 1. Create D1 database
 
-## Pages Function
+Di Cloudflare Dashboard:
 
-Browser requests use:
+1. Workers & Pages → D1.
+2. Create database.
+3. Gunakan nama misalnya `member-wp-db`.
+
+## 2. Bind D1 ke Pages
+
+Buka project Pages Member WP:
+
+1. Settings → Bindings.
+2. Add binding → D1 database.
+3. Variable name: `DB`.
+4. Pilih database D1 Member WP.
+5. Redeploy setelah binding disimpan.
+
+Pages Functions membaca database melalui `context.env.DB`.
+
+## 3. Configure login secrets
+
+Tambahkan secret/variable berikut di Cloudflare Pages:
+
+```text
+MEMBER_WP_USERNAME
+MEMBER_WP_PASSWORD
+SESSION_SECRET
+```
+
+Gunakan username/password Member WP yang Anda inginkan. `SESSION_SECRET` harus string acak panjang.
+
+Jangan commit nilai asli ke GitHub.
+
+## API
+
+Browser memakai endpoint:
 
 ```text
 /api/member-wp
 ```
 
-The Pages Function handles:
+Endpoint menangani:
 
-- login forwarding to the protected Supabase Edge Function;
-- setting the signed session as `HttpOnly; Secure; SameSite=Strict` cookie;
-- logout/session cookie removal;
-- forwarding authenticated bootstrap, CRUD sync, and credential requests.
+- login;
+- logout;
+- bootstrap database;
+- upsert/delete WP;
+- upsert/delete checklist mingguan;
+- health check.
 
-The browser never receives the Supabase service-role key.
+## Security/data minimization
 
-## Login verification
+API hanya menerima:
 
-The Supabase Edge Function verifies the application password against the private table:
+- collection `taxpayers`;
+- collection `tasks`.
+
+Payload disanitasi server-side. Field yang tidak termasuk allowlist dibuang sebelum data masuk D1.
+
+Database tidak dirancang untuk menyimpan credential WP, NPWP, EFIN, password, Coretax key/passphrase, file arsip, atau data sensitif lain.
+
+## Schema
+
+Pages Function menjalankan `CREATE TABLE IF NOT EXISTS` saat database pertama kali digunakan.
+
+SQL referensi:
 
 ```text
-member_wp_app_auth
+d1/schema.sql
 ```
-
-The table stores only PBKDF2 salt/hash/iteration metadata. Production login values are provisioned directly in Supabase and are not included in repository migrations.
-
-After successful verification, the Edge Function creates a 30-day HMAC-signed session. The Pages Function stores that token in the HttpOnly cookie.
-
-## Database tables
-
-```text
-member_wp_single_records
-member_wp_single_credentials
-member_wp_app_auth
-```
-
-RLS remains enabled. Browser roles do not receive direct grants to these tables.
 
 ## Local cache
 
-IndexedDB is used only after login as a browser cache/offline layer. Logout clears the local cache.
+IndexedDB tetap dipakai untuk cache browser setelah login. Logout membersihkan cache tersebut.

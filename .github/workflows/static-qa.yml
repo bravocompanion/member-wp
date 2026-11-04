@@ -14,6 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Periksa sintaks JavaScript
         run: |
           node --check static/app.js
@@ -21,9 +22,11 @@ jobs:
           node --check static/v011.js
           node --check static/v011-sanitize.js
           node --check functions/api/member-wp.js
+
       - name: Build bundle Cloudflare Pages
         run: npm run build
-      - name: Verifikasi v0.11 checklist-only
+
+      - name: Verifikasi v0.12 Cloudflare D1
         run: |
           test -f dist/index.html
           test -f dist/v011.js
@@ -31,35 +34,45 @@ jobs:
           test -f dist/v011.css
           test -f dist/_headers
           test -f functions/api/member-wp.js
-          test -f supabase/migrations/008_member_wp_checklist_only.sql
-          test -f supabase/functions/member-wp-personal-api/index.ts
+          test -f d1/schema.sql
           node - <<'NODE'
           const fs=require('fs')
           const html=fs.readFileSync('dist/index.html','utf8')
           const pkg=require('./package.json')
-          if(pkg.version!=='0.11.0') throw new Error('Versi harus 0.11.0')
-          for(const marker of ['Monitoring Coretax DJP','Checklist mingguan semua WP','v011.js','v011-sanitize.js']) if(!html.includes(marker)) throw new Error('Marker checklist hilang: '+marker)
-          for(const old of ['v010.js','v0101.js','v06.js','v061.js','Data Login WP','Arsip Dokumen']) if(html.includes(old)) throw new Error('Fitur lama masih dimuat: '+old)
+          if(pkg.version!=='0.12.0') throw new Error('Versi harus 0.12.0')
+
+          for(const marker of ['Monitoring Coretax DJP','Checklist mingguan semua WP','v011.js','v011-sanitize.js']) {
+            if(!html.includes(marker)) throw new Error('Marker checklist hilang: '+marker)
+          }
+          for(const old of ['v010.js','v0101.js','v06.js','v061.js','Data Login WP','Arsip Dokumen']) {
+            if(html.includes(old)) throw new Error('Fitur lama masih dimuat: '+old)
+          }
+
+          const sync=fs.readFileSync('dist/v09.js','utf8')
+          for(const marker of ['Cloudflare D1',"new Set(['taxpayers','tasks'])",'database_not_bound']) {
+            if(!sync.includes(marker)) throw new Error('D1 sync marker hilang: '+marker)
+          }
 
           const v011=fs.readFileSync('dist/v011.js','utf8')
-          for(const marker of ['CORETAX_DJP_WEEKLY','Monitoring Coretax DJP','weekly_monitoring','Sudah Dicek','Belum Dicek','v011EnsureWeek']) if(!v011.includes(marker)) throw new Error('Checklist marker hilang: '+marker)
+          for(const marker of ['CORETAX_DJP_WEEKLY','Monitoring Coretax DJP','weekly_monitoring','Sudah Dicek','Belum Dicek','v011EnsureWeek']) {
+            if(!v011.includes(marker)) throw new Error('Checklist marker hilang: '+marker)
+          }
 
           const sanitize=fs.readFileSync('dist/v011-sanitize.js','utf8')
-          for(const marker of ["['npwp','phone','email','pic','nik','kk']","profiles","notes","activities","weekly_monitoring"]) if(!sanitize.includes(marker)) throw new Error('Sanitizer marker hilang: '+marker)
-
-          const bridge=fs.readFileSync('functions/api/member-wp.js','utf8')
-          for(const forbidden of ['CREDENTIAL_UPSTREAM','credential-upsert','credential-delete']) if(bridge.includes(forbidden)) throw new Error('Routing sensitif masih aktif: '+forbidden)
-
-          const edge=fs.readFileSync('supabase/functions/member-wp-personal-api/index.ts','utf8')
-          for(const marker of ["new Set(['taxpayers','tasks'])","CORETAX","0.11.0"]) {
-            if(marker==='CORETAX') continue
-            if(!edge.includes(marker)) throw new Error('Backend checklist marker hilang: '+marker)
+          for(const marker of ["['npwp','phone','email','pic','nik','kk']",'profiles','notes','activities','weekly_monitoring']) {
+            if(!sanitize.includes(marker)) throw new Error('Sanitizer marker hilang: '+marker)
           }
-          for(const forbidden of ['member_wp_single_credentials','member_wp_archives','archive-upload','archive-download','credential-upsert','credential-delete']) if(edge.includes(forbidden)) throw new Error('Backend sensitif masih aktif: '+forbidden)
 
-          const migration=fs.readFileSync('supabase/migrations/008_member_wp_checklist_only.sql','utf8')
-          for(const marker of ['delete from public.member_wp_single_credentials','delete from public.member_wp_archives','CORETAX_DJP_WEEKLY','Monitoring Coretax DJP']) if(!migration.includes(marker)) throw new Error('Cleanup migration tidak lengkap: '+marker)
+          const api=fs.readFileSync('functions/api/member-wp.js','utf8')
+          for(const marker of ['env.DB','MEMBER_WP_USERNAME','MEMBER_WP_PASSWORD','SESSION_SECRET','member_wp_records',"new Set(['taxpayers','tasks'])",'sanitizeTaxpayer','sanitizeTask']) {
+            if(!api.includes(marker)) throw new Error('Backend D1 marker hilang: '+marker)
+          }
+          for(const forbidden of ['supabase.co','CREDENTIAL_UPSTREAM','credential-upsert','credential-delete','member_wp_single_credentials','member_wp_archives']) {
+            if(api.includes(forbidden)) throw new Error('Dependency/route lama masih aktif: '+forbidden)
+          }
 
-          const combined=html+v011+sanitize+bridge+edge+migration
-          if(combined.includes('bravo@911')) throw new Error('Password aplikasi tidak boleh ada di source')
+          const schema=fs.readFileSync('d1/schema.sql','utf8')
+          for(const marker of ['CREATE TABLE IF NOT EXISTS member_wp_records','PRIMARY KEY (collection, record_id)']) {
+            if(!schema.includes(marker)) throw new Error('D1 schema tidak lengkap: '+marker)
+          }
           NODE

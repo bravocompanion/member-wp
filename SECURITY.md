@@ -1,12 +1,19 @@
 # Security
 
-This public repository contains application source code and synthetic demo data only.
+This public repository contains application source code and synthetic/demo data only.
 
 Do not commit:
 - `.env` or `.env.local`
-- Supabase secret/service-role keys
+- Cloudflare API tokens or account keys
+- `MEMBER_WP_PASSWORD` or `SESSION_SECRET`
 - source workbooks (`*.xlsx`)
-- taxpayer names, NPWP/NIK, contact data, credentials, EFIN, Coretax keys/passphrases
-- generated import payloads
+- taxpayer NPWP/NIK, contact data, credentials, EFIN, Coretax keys/passphrases
+- generated import payloads containing private client data
 
-Use private infrastructure for production data and rotate any secret that is ever committed accidentally.
+Production Member WP v0.12 stores only the minimum checklist data in Cloudflare D1:
+- WP name
+- WP type
+- active/inactive status
+- weekly Monitoring Coretax DJP checklist state
+
+Rotate any secret that is ever committed accidentally.
