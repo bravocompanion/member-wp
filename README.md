@@ -1,84 +1,80 @@
-# Member WP v0.10 — Kontrol WP + Arsip Dokumen
+# Member WP v0.12 — Monitoring Coretax DJP
 
-Member WP adalah aplikasi pribadi untuk mengontrol setiap wajib pajak: data WP, tugas, batas waktu, catatan, riwayat aktivitas, data login, dan sekarang **arsip dokumen per WP**.
+Member WP adalah aplikasi checklist pribadi untuk monitoring seluruh WP.
 
-Aplikasi menggunakan **Cloudflare Pages + Pages Functions** dan project Supabase **`member wp`** sebagai database pusat.
+Fokus aplikasi saat ini:
 
-## Arsip per WP
+- daftar WP;
+- jenis WP (BADAN / OP);
+- status aktif / nonaktif;
+- checklist **Monitoring Coretax DJP** mingguan;
+- riwayat checklist mingguan.
 
-Setiap detail WP memiliki bagian **Arsip Dokumen**.
-
-Fitur:
-
-- upload beberapa file sekaligus;
-- kategori: Pajak, SPT, Bukti Bayar, Laporan Keuangan, Legal, Surat, Lainnya;
-- catatan opsional per upload;
-- daftar file khusus untuk WP tersebut;
-- tampil nama, kategori, ukuran, dan waktu upload;
-- download file;
-- hapus file;
-- saat WP benar-benar dihapus, arsip cloud WP tersebut ikut dibersihkan.
-
-File yang didukung:
-
-- PDF;
-- JPG/JPEG, PNG, WebP;
-- Word DOC/DOCX;
-- Excel XLS/XLSX;
-- CSV;
-- XML;
-- ZIP;
-- TXT.
-
-Batas ukuran: **20 MB per file**.
-
-File disimpan di bucket Supabase Storage private `member-wp-archives`. File tidak disimpan di GitHub dan tidak memiliki URL publik permanen. Browser hanya bisa mengaksesnya setelah login Member WP berhasil melalui API private.
-
-Metadata file disimpan di tabel `public.member_wp_archives` dengan RLS aktif dan akses `anon` / `authenticated` dicabut.
-
-## Login
-
-Aplikasi memakai satu akun pribadi Member WP.
-
-- Password tidak disimpan di GitHub, JavaScript, localStorage, atau cookie.
-- Password diverifikasi server-side dengan PBKDF2-SHA256.
-- Setelah login, Cloudflare menyimpan session sebagai cookie `HttpOnly; Secure; SameSite=Strict`.
-- Session maksimum 30 hari atau sampai tombol Keluar ditekan.
+Member WP **tidak lagi memakai Supabase sebagai backend produksi**. Data checklist disimpan di **Cloudflare D1** melalui Cloudflare Pages Functions.
 
 ## Arsitektur
 
 ```text
 Browser
-   ↓ login
-Cloudflare Pages Function
    ↓
-Supabase Edge Function
-   ├─ Database WP / tugas / catatan
-   ├─ Data login WP
-   └─ Arsip Dokumen
-          ↓
-   Supabase Storage private
+Cloudflare Pages
+   ↓
+Pages Function /api/member-wp
+   ├─ Login + session HttpOnly
+   └─ Cloudflare D1
+       ├─ taxpayers
+       └─ weekly monitoring tasks
 ```
 
-Browser tidak memegang Supabase service-role key dan tidak punya akses langsung ke tabel database atau Storage private.
+## Data yang diizinkan
 
-## Database produksi
+Backend hanya menerima dua collection:
 
-- 233 WP
-  - 72 Badan
-  - 161 OP
-- 233 data login
-- 36 kendala
-- 40 kebutuhan dokumen
-- 73 riwayat checklist
-- 21 referensi
-- 4 grup NPWP duplikat
+### taxpayers
 
-## Sinkronisasi
+- id
+- name
+- type
+- status
+- createdAt
+- updatedAt
 
-Data operasional seperti WP, profil kewajiban, tugas, catatan, aktivitas, dan metadata tetap memakai Supabase sebagai sumber utama dengan IndexedDB sebagai cache browser.
+### tasks
 
-File arsip **tidak disalin ke IndexedDB**. File tetap berada di Supabase Storage dan hanya diambil ketika pengguna menekan Download.
+Hanya task mingguan Monitoring Coretax DJP dengan field checklist yang diperlukan.
+
+Field sensitif seperti NPWP, NIK, email, nomor telepon, password, EFIN, Coretax key/passphrase, DJP key, dan arsip dokumen tidak termasuk dalam skema produksi v0.12.
+
+## Login
+
+Login diverifikasi di Cloudflare Pages Function menggunakan secret environment:
+
+- `MEMBER_WP_USERNAME`
+- `MEMBER_WP_PASSWORD`
+- `SESSION_SECRET`
+
+Nilai asli tidak disimpan di GitHub.
+
+Setelah login berhasil, session disimpan sebagai cookie:
+
+- HttpOnly
+- Secure
+- SameSite=Strict
+- maksimum 30 hari
+
+## Cloudflare D1
+
+Buat database D1 dan bind ke project Pages dengan nama:
+
+```text
+DB
+```
+
+Pages Function akan membuat tabel `member_wp_records` dan index yang diperlukan secara otomatis. SQL referensi juga tersedia di:
+
+```text
+d1/schema.sql
+```
 
 ## Cloudflare Pages
 
@@ -89,9 +85,10 @@ Build output directory: dist
 Root directory: /
 ```
 
-## Skema
+## Cache browser
 
-- `004_member_wp_single_user_database.sql` — database personal.
-- `005_member_wp_remove_legacy_auth_bootstrap.sql` — cleanup flow lama.
-- `006_member_wp_app_login.sql` — hash login aplikasi.
-- `007_member_wp_archives.sql` — metadata arsip + bucket Storage private.
+IndexedDB hanya dipakai sebagai cache/offline layer setelah login. Saat logout, cache lokal dibersihkan.
+
+## Source lama
+
+Folder migration/source Supabase lama dapat tetap berada di Git history sebagai referensi historis, tetapi runtime v0.12 tidak membutuhkan Supabase.
